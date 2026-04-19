@@ -6,6 +6,7 @@ import { getMessages } from '@/app/actions/chat'
 
 type Message = {
   id: string
+  chat_room_id: string
   sender_id: string
   content: string
   image_url: string | null
