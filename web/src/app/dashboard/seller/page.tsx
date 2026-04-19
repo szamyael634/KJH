@@ -1,17 +1,34 @@
 import { createClient } from '@/utils/supabase/server'
 import { createProduct } from './actions'
+import { redirect } from 'next/navigation'
 
 export default async function SellerDashboard() {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  
+  const { data, error: authError } = await supabase.auth.getUser()
+  const user = data?.user
+  if (!user || authError) {
+    redirect('/login')
+  }
 
   // Fetch true dynamic stats
   const { data: products } = await supabase
     .from('products')
     .select('*')
-    .eq('seller_id', user?.id)
+    .order('created_at', { ascending: false })
+    .eq('seller_id', user.id)
+
+  const { data: stats } = await supabase
+    .from('seller_stats')
+    .select('*')
+    .eq('seller_id', user.id)
+    .maybeSingle()
 
   const activeProductsCount = products?.length || 0
+  const totalSales = stats?.total_sales || 0
+  const totalRevenue = stats?.total_revenue || 0
+
+  const categories = ['Electronics', 'Gadgets', 'Peripherals', 'Accessories', 'Other']
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-8 pt-12 max-w-7xl mx-auto flex gap-8 flex-col lg:flex-row">
@@ -26,10 +43,18 @@ export default async function SellerDashboard() {
           </div>
         </header>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
           <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800">
             <h3 className="text-sm font-medium text-slate-500 mb-1">Active Products</h3>
             <span className="text-3xl font-bold text-slate-900 dark:text-white">{activeProductsCount}</span>
+          </div>
+          <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800">
+            <h3 className="text-sm font-medium text-slate-500 mb-1">Total Sales</h3>
+            <span className="text-3xl font-bold text-indigo-600 dark:text-indigo-400">{totalSales}</span>
+          </div>
+          <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800">
+            <h3 className="text-sm font-medium text-slate-500 mb-1">Revenue</h3>
+            <span className="text-3xl font-bold text-emerald-600 dark:text-emerald-400">${totalRevenue.toFixed(2)}</span>
           </div>
         </div>
 
@@ -62,6 +87,13 @@ export default async function SellerDashboard() {
             <div>
               <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Title</label>
               <input name="title" required className="mt-1 w-full rounded-md px-3 py-2 bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-slate-800 dark:border-slate-700 dark:text-white" />
+            </div>
+
+            <div>
+              <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Category</label>
+              <select name="category" className="mt-1 w-full rounded-md px-3 py-2 bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-slate-800 dark:border-slate-700 dark:text-white">
+                {categories.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
             </div>
             
             <div>

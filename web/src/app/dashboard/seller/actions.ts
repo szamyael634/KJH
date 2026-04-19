@@ -14,6 +14,7 @@ export async function createProduct(formData: FormData) {
 
   // Get form fields
   const title = formData.get('title') as string
+  const category = formData.get('category') as string
   const description = formData.get('description') as string
   const price = parseFloat(formData.get('price') as string)
   const stock = parseInt(formData.get('stock') as string, 10)
@@ -50,6 +51,7 @@ export async function createProduct(formData: FormData) {
     .insert({
       seller_id: user.id,
       title,
+      category,
       description,
       price,
       stock,

@@ -3,10 +3,12 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useCart } from '@/context/CartContext'
+import NotificationBell from '@/components/NotificationBell'
 
 export default function Navbar({ session }: { session: any }) {
   const pathname = usePathname()
   const { itemCount, setIsCartOpen } = useCart()
+  const userId = session?.user?.id
   
   // Don't show generic nav on auth pages
   if (pathname.startsWith('/login')) return null
@@ -24,7 +26,9 @@ export default function Navbar({ session }: { session: any }) {
             {userRole.charAt(0).toUpperCase() + userRole.slice(1)} Dashboard
           </Link>
         </div>
-        <div className="flex items-center gap-6">
+        <div className="flex items-center gap-2 md:gap-4">
+          {userId && <NotificationBell userId={userId} />}
+
           <button 
             onClick={() => setIsCartOpen(true)}
             className="group relative flex items-center justify-center p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"

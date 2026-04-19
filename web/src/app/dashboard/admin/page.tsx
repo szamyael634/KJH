@@ -1,16 +1,21 @@
 import { createClient } from '@/utils/supabase/server'
 import { deleteProduct, toggleUserBan } from './actions'
+import { redirect } from 'next/navigation'
 
 export const revalidate = 0
 
 export default async function AdminDashboard() {
   const supabase = await createClient()
 
-  // Verify Admin Role before rendering
-  const { data: { user } } = await supabase.auth.getUser()
-  const { data: userProfile } = await supabase.from('profiles').select('role').eq('id', user?.id).single()
+  const { data, error: authError } = await supabase.auth.getUser()
+  const user = data?.user
+  if (!user || authError) {
+    redirect('/login')
+  }
+
+  const { data: userProfile } = await supabase.from('profiles').select('role').eq('id', user.id).maybeSingle()
   
-  if (userProfile?.role !== 'admin') {
+  if (!userProfile || userProfile.role !== 'admin') {
     return (
       <div className="min-h-screen bg-slate-900 flex items-center justify-center p-8">
         <div className="bg-red-500/10 border border-red-500/50 p-6 rounded-2xl text-red-500 font-bold max-w-md text-center">
@@ -20,24 +25,38 @@ export default async function AdminDashboard() {
     )
   }
 
-  // Fetch all users and products
+  // Fetch all users, products, and orders
   const { data: profiles } = await supabase.from('profiles').select('*').order('updated_at', { ascending: false })
   const { data: products } = await supabase.from('products').select('*, profiles(full_name)').order('created_at', { ascending: false })
+  const { data: orders } = await supabase.from('orders').select('total_amount')
+
+  const totalVolume = orders?.reduce((acc, order) => acc + Number(order.total_amount), 0) || 0
+  const buyersCount = profiles?.filter(p => p.role === 'buyer').length || 0
+  const sellersCount = profiles?.filter(p => p.role === 'seller').length || 0
+  const ridersCount = profiles?.filter(p => p.role === 'rider').length || 0
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-8 max-w-7xl mx-auto w-full">
-      <header className="mb-10 p-6 bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 flex justify-between items-center">
+      <header className="mb-10 p-8 bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 flex flex-wrap justify-between items-center gap-6">
         <div>
           <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">Admin Console</h1>
           <p className="text-slate-500 mt-1">Global management and moderation.</p>
         </div>
-        <div className="flex gap-4">
-          <div className="bg-slate-100 dark:bg-slate-800 px-4 py-2 rounded-xl text-center">
-            <p className="text-xs text-slate-500 uppercase tracking-widest font-bold">Total Users</p>
-            <p className="text-xl font-bold dark:text-white">{profiles?.length || 0}</p>
+        <div className="flex flex-wrap gap-4">
+          <div className="bg-slate-50 dark:bg-slate-800/50 px-6 py-3 rounded-2xl text-center border border-slate-100 dark:border-slate-800">
+            <p className="text-[10px] text-slate-400 uppercase tracking-widest font-bold mb-1">Total Volume</p>
+            <p className="text-2xl font-black text-emerald-600 dark:text-emerald-400">${totalVolume.toLocaleString()}</p>
           </div>
-          <div className="bg-slate-100 dark:bg-slate-800 px-4 py-2 rounded-xl text-center">
-            <p className="text-xs text-slate-500 uppercase tracking-widest font-bold">Total Products</p>
+          <div className="bg-slate-50 dark:bg-slate-800/50 px-6 py-3 rounded-2xl text-center border border-slate-100 dark:border-slate-800">
+            <p className="text-[10px] text-slate-400 uppercase tracking-widest font-bold mb-1">Structure</p>
+            <div className="flex gap-2 items-baseline">
+              <span className="text-xs font-bold text-blue-500">{buyersCount}B</span>
+              <span className="text-xs font-bold text-indigo-500">{sellersCount}S</span>
+              <span className="text-xs font-bold text-amber-500">{ridersCount}R</span>
+            </div>
+          </div>
+          <div className="bg-slate-50 dark:bg-slate-800/50 px-6 py-3 rounded-2xl text-center border border-slate-100 dark:border-slate-800">
+            <p className="text-[10px] text-slate-400 uppercase tracking-widest font-bold mb-1">Inventory</p>
             <p className="text-xl font-bold dark:text-white">{products?.length || 0}</p>
           </div>
         </div>

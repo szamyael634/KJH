@@ -1,11 +1,22 @@
 import { createClient } from '@/utils/supabase/server'
 import { claimOrder, completeDelivery } from './actions'
+import { redirect } from 'next/navigation'
 
 export const revalidate = 0
 
 export default async function RiderDashboard() {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+
+  const { data, error: authError } = await supabase.auth.getUser()
+  const user = data?.user
+  if (!user || authError) {
+    redirect('/login')
+  }
+
+  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).maybeSingle()
+  if (!profile || profile.role !== 'rider') {
+    redirect('/')
+  }
 
   // 1. Available Orders (Paid, no rider)
   const { data: availableOrders } = await supabase
