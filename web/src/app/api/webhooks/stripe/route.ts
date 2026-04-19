@@ -2,13 +2,15 @@ import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { createClient } from '@/utils/supabase/server';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2026-03-25.dahlia',
-});
-
-const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET!;
+export const dynamic = 'force-dynamic';
 
 export async function POST(req: Request) {
+  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+    apiVersion: '2026-03-25.dahlia',
+  });
+
+  const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET!;
+
   const payload = await req.text();
   const sig = req.headers.get('stripe-signature')!;
 
