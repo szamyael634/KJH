@@ -29,6 +29,7 @@ export default async function RootLayout({
   const supabase = await createClient()
   const { data } = await supabase.auth.getSession()
   const session = data?.session
+  const userId = session?.user?.id || null
 
   return (
     <html
@@ -37,9 +38,12 @@ export default async function RootLayout({
     >
       <body className="min-h-full flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white">
         <CartProvider>
-          <Navbar session={session} />
-          <CartSidebar />
-          <main className="flex-1 flex flex-col w-full relative">{children}</main>
+          <MessagingProvider userId={userId}>
+            <Navbar session={session} />
+            <CartSidebar />
+            <main className="flex-1 flex flex-col w-full relative">{children}</main>
+            <ChatWindow />
+          </MessagingProvider>
         </CartProvider>
       </body>
     </html>

@@ -1,9 +1,10 @@
-'use client'
-
+import { useState } from 'react'
 import { useCart, CartItem } from '@/context/CartContext'
 
 export default function AddToCartButton({ 
-  product 
+  product,
+  quantity = 1,
+  className = ""
 }: { 
   product: { 
     id: string, 
@@ -11,9 +12,12 @@ export default function AddToCartButton({
     title: string, 
     price: number, 
     image_url: string | null 
-  } 
+  },
+  quantity?: number,
+  className?: string
 }) {
   const { addItem } = useCart()
+  const [isAdded, setIsAdded] = useState(false)
 
   const handleAdd = () => {
     addItem({
@@ -22,16 +26,18 @@ export default function AddToCartButton({
       title: product.title,
       price: product.price,
       image_url: product.image_url,
-      quantity: 1
+      quantity: quantity
     })
+    setIsAdded(true)
+    setTimeout(() => setIsAdded(false), 2000)
   }
 
   return (
     <button 
       onClick={handleAdd}
-      className="w-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-xl py-3 text-sm font-bold shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all"
+      className={`w-full ${isAdded ? 'bg-emerald-500 text-white' : 'bg-slate-900 dark:bg-white text-white dark:text-slate-900'} rounded-xl py-3 text-sm font-bold shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all ${className}`}
     >
-      Add to Cart
+      {isAdded ? '✓ Added' : 'Add to Cart'}
     </button>
   )
 }

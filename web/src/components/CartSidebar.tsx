@@ -80,18 +80,50 @@ export default function CartSidebar() {
           </div>
 
           {items.length > 0 && (
-            <footer className="px-6 py-8 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 space-y-4">
-              <div className="flex justify-between items-center text-slate-500 text-sm">
-                <span>Subtotal</span>
-                <span>${totalPrice.toFixed(2)}</span>
+            <footer className="px-6 py-8 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 space-y-6">
+              
+              {/* Voucher Section */}
+              <div className="space-y-3">
+                 <div className="flex gap-2">
+                    <input 
+                      type="text" 
+                      placeholder="Coupon Code" 
+                      className="flex-1 bg-white dark:bg-slate-800 border-none rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-indigo-500"
+                      value={couponInput}
+                      onChange={(e) => setCouponInput(e.target.value)}
+                    />
+                    <button 
+                      onClick={handleApplyVoucher}
+                      disabled={isApplying}
+                      className="bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 px-4 py-2 rounded-xl text-xs font-bold disabled:opacity-50"
+                    >
+                      {isApplying ? '...' : 'Apply'}
+                    </button>
+                 </div>
+                 {error && <p className="text-[10px] text-red-500 font-bold">{error}</p>}
+                 {voucher && <p className="text-[10px] text-emerald-500 font-bold">✓ Applied: {voucher}</p>}
               </div>
-              <div className="flex justify-between items-center text-slate-900 dark:text-white font-bold text-xl">
-                <span>Total</span>
-                <span>${totalPrice.toFixed(2)}</span>
+
+              <div className="space-y-2">
+                <div className="flex justify-between items-center text-slate-500 text-sm">
+                  <span>Subtotal</span>
+                  <span>${items.reduce((acc, i) => acc + i.price * i.quantity, 0).toFixed(2)}</span>
+                </div>
+                {discount > 0 && (
+                  <div className="flex justify-between items-center text-emerald-600 text-sm font-bold">
+                    <span>Discount</span>
+                    <span>-${discount.toFixed(2)}</span>
+                  </div>
+                )}
+                <div className="flex justify-between items-center text-slate-900 dark:text-white font-black text-2xl pt-2">
+                  <span>Total</span>
+                  <span>${totalPrice.toFixed(2)}</span>
+                </div>
               </div>
+
               <button 
                 onClick={handleCheckout}
-                className="w-full bg-slate-900 dark:bg-indigo-600 text-white font-bold py-4 rounded-2xl shadow-xl hover:shadow-2xl transition-all hover:-translate-y-0.5"
+                className="w-full bg-indigo-600 text-white font-bold py-4 rounded-2xl shadow-xl hover:shadow-2xl transition-all hover:-translate-y-0.5"
               >
                 Go to Checkout
               </button>

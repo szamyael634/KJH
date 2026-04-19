@@ -21,9 +21,22 @@ export default function Navbar({ session }: { session: any }) {
         <Link href="/" className="flex items-center gap-2 mr-6 font-bold text-xl tracking-tight text-indigo-600 dark:text-indigo-400">
           Nexus
         </Link>
-        <div className="flex-1 flex gap-4 text-sm font-medium text-slate-600 dark:text-slate-300">
-          <Link href={`/dashboard/${userRole}`} className="hover:text-indigo-600 dark:hover:text-white transition-colors">
-            {userRole.charAt(0).toUpperCase() + userRole.slice(1)} Dashboard
+        <div className="flex-1 flex items-center gap-8 justify-center max-w-2xl px-4">
+          <div className="relative w-full group hidden md:block">
+            <input 
+              type="text" 
+              placeholder="Search for products, brands..." 
+              className="w-full bg-slate-100 dark:bg-slate-800 border-none rounded-2xl py-2 pl-4 pr-10 text-sm focus:ring-2 focus:ring-indigo-500 transition-all"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  window.location.href = `/search?q=${(e.target as HTMLInputElement).value}`
+                }
+              }}
+            />
+            <svg className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-indigo-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+          </div>
+          <Link href="/search" className="text-sm font-bold text-slate-600 hover:text-indigo-600 transition-colors hidden lg:block">
+            Browse
           </Link>
         </div>
         <div className="flex items-center gap-2 md:gap-4">
@@ -42,11 +55,16 @@ export default function Navbar({ session }: { session: any }) {
           </button>
 
           {session ? (
-            <form action="/auth/signout" method="post">
-              <button className="text-sm font-medium text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white">
-                Log Out
-              </button>
-            </form>
+            <div className="flex items-center gap-4">
+              <Link href={`/dashboard/${userRole}`} className="text-sm font-bold text-slate-600 hover:text-indigo-600 transition-colors hidden sm:block">
+                Dashboard
+              </Link>
+              <form action="/auth/signout" method="post">
+                <button className="text-sm font-medium text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white">
+                  Log Out
+                </button>
+              </form>
+            </div>
           ) : (
             <Link href="/login" className="bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 px-6 py-2 rounded-full text-sm font-bold shadow-sm hover:shadow-md transition-all">
               Log In

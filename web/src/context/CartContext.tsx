@@ -21,6 +21,9 @@ type CartContextType = {
   itemCount: number
   isCartOpen: boolean
   setIsCartOpen: (open: boolean) => void
+  voucher: string | null
+  discount: number
+  applyVoucher: (code: string | null, value: number) => void
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined)
@@ -79,9 +82,16 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     )
   }
 
-  const clearCart = () => setItems([])
+  const [voucher, setVoucher] = useState<string | null>(null)
+  const [discount, setDiscount] = useState(0)
 
-  const totalPrice = items.reduce((acc, item) => acc + item.price * item.quantity, 0)
+  const applyVoucher = (code: string | null, value: number) => {
+    setVoucher(code)
+    setDiscount(value)
+  }
+
+  const rawTotal = items.reduce((acc, item) => acc + item.price * item.quantity, 0)
+  const totalPrice = Math.max(0, rawTotal - discount)
   const itemCount = items.reduce((acc, item) => acc + item.quantity, 0)
 
   return (
@@ -96,6 +106,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         itemCount,
         isCartOpen,
         setIsCartOpen,
+        voucher,
+        discount,
+        applyVoucher,
       }}
     >
       {children}

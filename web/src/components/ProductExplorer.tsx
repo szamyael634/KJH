@@ -3,9 +3,17 @@
 import { useState } from 'react'
 import AddToCartButton from './AddToCartButton'
 
-export default function ProductExplorer({ initialProducts }: { initialProducts: any[] }) {
-  const [search, setSearch] = useState('')
-  const [selectedCategory, setSelectedCategory] = useState('All')
+export default function ProductExplorer({ 
+  initialProducts,
+  initialSearch = '',
+  initialCategory = 'All'
+}: { 
+  initialProducts: any[],
+  initialSearch?: string,
+  initialCategory?: string
+}) {
+  const [search, setSearch] = useState(initialSearch)
+  const [selectedCategory, setSelectedCategory] = useState(initialCategory)
 
   const categories = ['All', 'Electronics', 'Gadgets', 'Peripherals', 'Accessories', 'Other']
 
@@ -50,22 +58,24 @@ export default function ProductExplorer({ initialProducts }: { initialProducts: 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 animate-in fade-in duration-500">
           {filteredProducts.map((item) => (
             <div key={item.id} className="bg-white dark:bg-slate-900 p-5 rounded-2xl shadow-sm hover:shadow-xl transition-all cursor-pointer hover:-translate-y-2 border border-slate-100 dark:border-slate-800 flex flex-col group">
-              <div className="w-full aspect-square bg-slate-100 dark:bg-slate-800 rounded-xl mb-4 overflow-hidden relative">
-                {item.image_url ? (
-                  <img src={item.image_url} alt={item.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-slate-400 font-medium">No Image</div>
-                )}
-                <div className="absolute top-3 left-3 px-3 py-1 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md rounded-full text-[10px] font-bold uppercase tracking-wider text-indigo-600">
-                  {item.category || 'Tech'}
+              <Link href={`/products/${item.id}`} className="block">
+                <div className="w-full aspect-square bg-slate-100 dark:bg-slate-800 rounded-xl mb-4 overflow-hidden relative">
+                  {item.image_url ? (
+                    <img src={item.image_url} alt={item.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-slate-400 font-medium">No Image</div>
+                  )}
+                  <div className="absolute top-3 left-3 px-3 py-1 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md rounded-full text-[10px] font-bold uppercase tracking-wider text-indigo-600">
+                    {item.category || 'Tech'}
+                  </div>
                 </div>
-              </div>
-              <p className="text-xs text-slate-400 mb-1 font-medium">{item.profiles?.full_name || 'Anonymous Seller'}</p>
-              <h3 className="font-bold text-slate-900 dark:text-white leading-tight mb-2 h-10 line-clamp-2">{item.title}</h3>
-              
-              <div className="mt-auto pt-4 flex items-center justify-between">
-                <p className="text-indigo-600 dark:text-indigo-400 font-extrabold text-lg">${item.price}</p>
-              </div>
+                <p className="text-xs text-slate-400 mb-1 font-medium">{item.profiles?.full_name || 'Anonymous Seller'}</p>
+                <h3 className="font-bold text-slate-900 dark:text-white leading-tight mb-2 h-10 line-clamp-2">{item.title}</h3>
+                
+                <div className="mt-auto pt-4 flex items-center justify-between">
+                  <p className="text-indigo-600 dark:text-indigo-400 font-extrabold text-lg">${item.price}</p>
+                </div>
+              </Link>
 
               <div className="mt-4">
                 <AddToCartButton product={item} />
