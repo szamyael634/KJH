@@ -82,6 +82,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     )
   }
 
+  const clearCart = () => setItems([])
+
   const [voucher, setVoucher] = useState<string | null>(null)
   const [discount, setDiscount] = useState(0)
 
