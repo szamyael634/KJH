@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { useCart } from '@/context/CartContext'
 
 export default function CartSidebar() {
@@ -9,8 +10,35 @@ export default function CartSidebar() {
     setIsCartOpen, 
     removeItem, 
     updateQuantity, 
-    totalPrice 
+    totalPrice,
+    voucher,
+    discount,
+    applyVoucher
   } = useCart()
+
+  const [couponInput, setCouponInput] = useState('')
+  const [isApplying, setIsApplying] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const handleApplyVoucher = async () => {
+    if (!couponInput) return
+    setIsApplying(true)
+    setError(null)
+    try {
+      const resp = await fetch('/api/vouchers/apply', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: couponInput, items })
+      })
+      const data = await resp.json()
+      if (data.error) throw new Error(data.error)
+      applyVoucher(data.code, data.discount)
+    } catch (err: any) {
+      setError(err.message)
+    } finally {
+      setIsApplying(false)
+    }
+  }
 
   if (!isCartOpen) return null
 
@@ -19,7 +47,7 @@ export default function CartSidebar() {
       const response = await fetch('/api/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ items }),
+        body: JSON.stringify({ items, voucherCode: voucher }),
       })
       const data = await response.json()
       if (data.url) {

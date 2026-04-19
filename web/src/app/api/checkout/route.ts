@@ -24,12 +24,18 @@ export async function POST(req: Request) {
 
     const contentType = req.headers.get('content-type') || '';
     let items = [];
+    let voucherCode = null;
 
     if (contentType.includes('application/x-www-form-urlencoded')) {
       const formData = await req.formData();
       const itemsStr = formData.get('items') as string;
       items = JSON.parse(itemsStr);
-    const { items, voucherCode } = await req.json();
+      voucherCode = formData.get('voucherCode') as string;
+    } else {
+      const body = await req.json();
+      items = body.items;
+      voucherCode = body.voucherCode;
+    }
 
     // Re-verify voucher to prevent tampering
     let discountAmount = 0;

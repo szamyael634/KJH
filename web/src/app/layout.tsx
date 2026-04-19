@@ -3,8 +3,10 @@ import { Geist, Geist_Mono } from 'next/font/google'
 import './globals.css'
 import Navbar from '@/components/Navbar'
 import CartSidebar from '@/components/CartSidebar'
+import ChatWindow from '@/components/ChatWindow'
 import { createClient } from '@/utils/supabase/server'
 import { CartProvider } from '@/context/CartContext'
+import { MessagingProvider } from '@/context/MessagingContext'
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
