@@ -5,7 +5,7 @@ import ProductDetailsClient from '@/components/ProductDetailsClient'
 
 export const dynamic = 'force-dynamic'
 
-export default async function ProductPage({ params }: { params: { id: string } }) {
+export default async function ProductPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const supabase = await createClient()
 
