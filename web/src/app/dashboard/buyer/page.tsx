@@ -1,4 +1,5 @@
 import { createClient } from '@/utils/supabase/server'
+import AddToCartButton from '@/components/AddToCartButton'
 
 export const revalidate = 0 // always fresh data for shop
 
@@ -18,11 +19,6 @@ export default async function BuyerDashboard() {
           <h1 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight">Discover</h1>
           <p className="text-slate-500 mt-1">Explore premium tech products from verified sellers.</p>
         </div>
-        
-        {/* Placeholder Cart Button */}
-        <button className="flex items-center justify-center p-3 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 transition-colors">
-          <svg className="w-6 h-6 text-slate-700 dark:text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
-        </button>
       </header>
 
       {products && products.length > 0 ? (
@@ -41,18 +37,10 @@ export default async function BuyerDashboard() {
               
               <div className="mt-auto pt-4 flex items-center justify-between">
                 <p className="text-indigo-600 dark:text-indigo-400 font-extrabold text-lg">${item.price}</p>
-                <form action="/api/checkout" method="POST">
-                  <input type="hidden" name="items" value={JSON.stringify([{ 
-                    price: item.price, 
-                    quantity: 1, 
-                    title: item.title,
-                    product_id: item.id,
-                    seller_id: item.seller_id
-                  }])} />
-                  <button className="bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-lg px-4 py-2 text-sm font-bold shadow-sm hover:opacity-90 transition-opacity">
-                    Buy
-                  </button>
-                </form>
+              </div>
+
+              <div className="mt-4">
+                <AddToCartButton product={item} />
               </div>
             </div>
           ))}

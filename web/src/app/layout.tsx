@@ -2,7 +2,9 @@ import type { Metadata } from 'next'
 import { Geist, Geist_Mono } from 'next/font/google'
 import './globals.css'
 import Navbar from '@/components/Navbar'
+import CartSidebar from '@/components/CartSidebar'
 import { createClient } from '@/utils/supabase/server'
+import { CartProvider } from '@/context/CartContext'
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -35,8 +37,11 @@ export default async function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white">
-        <Navbar session={session} />
-        <main className="flex-1 flex flex-col w-full relative">{children}</main>
+        <CartProvider>
+          <Navbar session={session} />
+          <CartSidebar />
+          <main className="flex-1 flex flex-col w-full relative">{children}</main>
+        </CartProvider>
       </body>
     </html>
   )
