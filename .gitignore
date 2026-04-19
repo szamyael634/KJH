@@ -1,0 +1,11 @@
+# root ignores
+node_modules
+.env
+.env.local
+.DS_Store
+
+# secret keys
+keys/
+
+# supabase local db
+supabase/.temp/
