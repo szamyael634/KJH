@@ -13,6 +13,7 @@ import {
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import CreateProductForm from '@/components/seller/CreateProductForm'
+import { cn } from '@/utils/cn'
 
 export default async function SellerDashboard() {
   const supabase = await createClient()
@@ -165,6 +166,3 @@ function Trash2({ className }: { className?: string }) {
   )
 }
 
-function cn(...inputs: any[]) {
-   return inputs.filter(Boolean).join(' ')
-}

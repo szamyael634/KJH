@@ -24,6 +24,7 @@ import {
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { getAdminAnalytics } from '@/app/actions/admin'
+import { cn } from '@/utils/cn'
 
 export default function AdminAnalytics() {
   const [data, setData] = useState<any>(null)
@@ -127,6 +128,3 @@ export default function AdminAnalytics() {
   )
 }
 
-function cn(...inputs: any[]) {
-   return inputs.filter(Boolean).join(' ')
-}

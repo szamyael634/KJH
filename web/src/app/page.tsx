@@ -11,6 +11,7 @@ import {
   ArrowRight 
 } from 'lucide-react'
 import BannerCarousel from '@/components/BannerCarousel'
+import { cn } from '@/utils/cn'
 
 export const revalidate = 600 // Cache for 10 minutes
 
@@ -97,6 +98,3 @@ export default async function Home() {
   )
 }
 
-function cn(...inputs: any[]) {
-   return inputs.filter(Boolean).join(' ')
-}

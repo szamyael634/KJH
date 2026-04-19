@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { LogIn } from 'lucide-react'
 import MultiStepSignup from '@/components/auth/MultiStepSignup'
 
-export default async function LoginPage({ searchParams }: { searchParams: { message: string, mode?: string } }) {
+export default async function LoginPage({ searchParams }: { searchParams: Promise<{ message: string, mode?: string }> }) {
   const params = await searchParams;
   const isSignup = params?.mode === 'signup'
 

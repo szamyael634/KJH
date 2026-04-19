@@ -15,6 +15,7 @@ import {
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { getPendingVerifications, updateVerificationStatus } from '@/app/actions/admin'
+import { cn } from '@/utils/cn'
 
 export default function VerificationQueue() {
   const [profiles, setProfiles] = useState<any[]>([])
@@ -176,6 +177,3 @@ export default function VerificationQueue() {
   )
 }
 
-function cn(...inputs: any[]) {
-  return inputs.filter(Boolean).join(' ')
-}
