@@ -42,7 +42,13 @@ export default async function BuyerDashboard() {
               <div className="mt-auto pt-4 flex items-center justify-between">
                 <p className="text-indigo-600 dark:text-indigo-400 font-extrabold text-lg">${item.price}</p>
                 <form action="/api/checkout" method="POST">
-                  <input type="hidden" name="items" value={JSON.stringify([{ price: item.price, quantity: 1, title: item.title }])} />
+                  <input type="hidden" name="items" value={JSON.stringify([{ 
+                    price: item.price, 
+                    quantity: 1, 
+                    title: item.title,
+                    product_id: item.id,
+                    seller_id: item.seller_id
+                  }])} />
                   <button className="bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-lg px-4 py-2 text-sm font-bold shadow-sm hover:opacity-90 transition-opacity">
                     Buy
                   </button>
