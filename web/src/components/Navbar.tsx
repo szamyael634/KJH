@@ -2,8 +2,18 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { 
+  ShoppingBag, 
+  MessageSquare, 
+  Bell, 
+  User, 
+  LayoutDashboard, 
+  LogOut 
+} from 'lucide-react'
 import { useCart } from '@/context/CartContext'
+import GlobalSearch from '@/components/GlobalSearch'
 import NotificationBell from '@/components/NotificationBell'
+import { Button } from './ui/Button'
 
 export default function Navbar({ session }: { session: any }) {
   const pathname = usePathname()
@@ -11,63 +21,76 @@ export default function Navbar({ session }: { session: any }) {
   const userId = session?.user?.id
   
   // Don't show generic nav on auth pages
-  if (pathname.startsWith('/login')) return null
+  if (pathname.startsWith('/login') || pathname.startsWith('/auth')) return null
 
-  const userRole = session?.user?.user_metadata?.role || "buyer" // default or fetched role from session
+  const userRole = session?.user?.user_metadata?.role || "buyer" 
 
   return (
-    <nav className="sticky top-0 z-40 w-full backdrop-blur-xl bg-white/70 border-b border-slate-200 dark:bg-slate-900/70 dark:border-slate-800 transition-all">
-      <div className="flex h-16 items-center px-4 md:px-8 max-w-7xl mx-auto">
-        <Link href="/" className="flex items-center gap-2 mr-6 font-bold text-xl tracking-tight text-indigo-600 dark:text-indigo-400">
-          Nexus
+    <nav className="sticky top-0 z-40 w-full glass transition-all">
+      <div className="flex h-16 items-center px-4 md:px-8 max-w-7xl mx-auto gap-4 md:gap-8">
+        {/* Logo */}
+        <Link href="/" className="flex items-center gap-2 font-black text-2xl tracking-tighter text-slate-900 dark:text-white shrink-0">
+          NEXUS
+          <span className="w-1.5 h-1.5 bg-indigo-600 rounded-full"></span>
         </Link>
-        <div className="flex-1 flex items-center gap-8 justify-center max-w-2xl px-4">
-          <div className="relative w-full group hidden md:block">
-            <input 
-              type="text" 
-              placeholder="Search for products, brands..." 
-              className="w-full bg-slate-100 dark:bg-slate-800 border-none rounded-2xl py-2 pl-4 pr-10 text-sm focus:ring-2 focus:ring-indigo-500 transition-all"
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  window.location.href = `/search?q=${(e.target as HTMLInputElement).value}`
-                }
-              }}
-            />
-            <svg className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-indigo-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-          </div>
-          <Link href="/search" className="text-sm font-bold text-slate-600 hover:text-indigo-600 transition-colors hidden lg:block">
-            Browse
-          </Link>
+        
+        {/* Search Bar - Center */}
+        <div className="flex-1 max-w-2xl hidden md:block">
+          <GlobalSearch />
         </div>
-        <div className="flex items-center gap-2 md:gap-4">
+
+        {/* Right Side Actions */}
+        <div className="flex items-center gap-1 md:gap-3">
+          {/* Public / Search Link for Mobile or extra nav */}
+          <Link href="/search" className="p-2 text-slate-500 hover:text-indigo-600 transition-colors md:hidden">
+            <ShoppingBag className="w-6 h-6" />
+          </Link>
+
+          {/* Messages */}
+          {userId && (
+            <Link href="/messages" className="p-2.5 text-slate-500 hover:text-indigo-600 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-full transition-all relative">
+              <MessageSquare className="w-6 h-6" />
+              {/* Optional: unread count dot */}
+            </Link>
+          )}
+
+          {/* Notifications */}
           {userId && <NotificationBell userId={userId} />}
 
+          {/* Cart */}
           <button 
             onClick={() => setIsCartOpen(true)}
-            className="group relative flex items-center justify-center p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            className="p-2.5 text-slate-500 hover:text-indigo-600 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-full transition-all relative"
           >
-            <svg className="w-6 h-6 text-slate-600 dark:text-slate-400 group-hover:text-indigo-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+            <ShoppingBag className="w-6 h-6" />
             {itemCount > 0 && (
-              <span className="absolute -top-1 -right-1 bg-indigo-600 text-white text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-full ring-2 ring-white dark:ring-slate-900 animate-in zoom-in duration-200">
+              <span className="absolute top-1 right-1 bg-indigo-600 text-white text-[10px] font-black w-4 h-4 flex items-center justify-center rounded-full ring-2 ring-white dark:ring-slate-900 animate-in zoom-in duration-300">
                 {itemCount}
               </span>
             )}
           </button>
 
+          {/* Profile / Auth */}
           {session ? (
-            <div className="flex items-center gap-4">
-              <Link href={`/dashboard/${userRole}`} className="text-sm font-bold text-slate-600 hover:text-indigo-600 transition-colors hidden sm:block">
-                Dashboard
+            <div className="flex items-center gap-2 ml-2">
+              <Link href={`/dashboard/${userRole}`}>
+                <Button variant="ghost" size="icon" className="rounded-full overflow-hidden border border-slate-100 dark:border-slate-800">
+                  {session.user.user_metadata.avatar_url ? (
+                    <img src={session.user.user_metadata.avatar_url} alt="" className="w-full h-full object-cover" />
+                  ) : (
+                    <User className="w-5 h-5" />
+                  )}
+                </Button>
               </Link>
               <form action="/auth/signout" method="post">
-                <button className="text-sm font-medium text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white">
-                  Log Out
+                <button className="p-2.5 text-slate-400 hover:text-red-500 transition-colors tooltip" title="Log Out">
+                  <LogOut className="w-5 h-5" />
                 </button>
               </form>
             </div>
           ) : (
-            <Link href="/login" className="bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 px-6 py-2 rounded-full text-sm font-bold shadow-sm hover:shadow-md transition-all">
-              Log In
+            <Link href="/login" className="ml-2">
+              <Button size="sm" className="rounded-full">Log In</Button>
             </Link>
           )}
         </div>

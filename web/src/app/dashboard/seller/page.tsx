@@ -1,128 +1,170 @@
 import { createClient } from '@/utils/supabase/server'
-import { createProduct } from './actions'
 import { redirect } from 'next/navigation'
+import { 
+  Plus, 
+  Package, 
+  DollarSign, 
+  TrendingUp, 
+  ShoppingBag,
+  Store,
+  LayoutGrid,
+  Settings
+} from 'lucide-react'
+import { Button } from '@/components/ui/Button'
+import { Card } from '@/components/ui/Card'
+import CreateProductForm from '@/components/seller/CreateProductForm'
 
 export default async function SellerDashboard() {
   const supabase = await createClient()
   
-  const { data, error: authError } = await supabase.auth.getUser()
-  const user = data?.user
-  if (!user || authError) {
-    redirect('/login')
-  }
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
 
-  // Fetch true dynamic stats
   const { data: products } = await supabase
     .from('products')
-    .select('*')
+    .select('*, product_variations(*)')
+    .eq('seller_id', user.id)
     .order('created_at', { ascending: false })
-    .eq('seller_id', user.id)
 
-  const { data: stats } = await supabase
-    .from('seller_stats')
+  const { data: profile } = await supabase
+    .from('profiles')
     .select('*')
-    .eq('seller_id', user.id)
-    .maybeSingle()
+    .eq('id', user.id)
+    .single()
 
-  const activeProductsCount = products?.length || 0
-  const totalSales = stats?.total_sales || 0
-  const totalRevenue = stats?.total_revenue || 0
-
-  const categories = ['Electronics', 'Gadgets', 'Peripherals', 'Accessories', 'Other']
+  // Simplified stats for the minimalist UI
+  const activeProducts = products?.length || 0
+  const totalRevenue = products?.reduce((acc, p) => acc + (p.price * p.stock), 0) || 0
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-8 pt-12 max-w-7xl mx-auto flex gap-8 flex-col lg:flex-row">
-      <div className="flex-1">
-        <header className="mb-10 flex justify-between items-center bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800">
-          <div>
-            <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Seller Console</h1>
-            <p className="text-slate-500">Manage your storefront and orders.</p>
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
+      <div className="max-w-7xl mx-auto px-8 py-12 space-y-12">
+        {/* Modern Header */}
+        <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+          <div className="flex items-center gap-6">
+             <div className="w-20 h-20 rounded-3xl bg-indigo-600 shadow-2xl shadow-indigo-200 dark:shadow-none flex items-center justify-center border-4 border-white dark:border-slate-800">
+                <Store className="w-10 h-10 text-white" />
+             </div>
+             <div>
+                <h1 className="text-4xl font-black text-slate-900 dark:text-white tracking-tighter">
+                   {profile?.store_name || "Merchant Console"}
+                </h1>
+                <p className="text-slate-500 font-medium flex items-center gap-2">
+                   Managing {activeProducts} active listings
+                   <span className="w-1 h-1 bg-slate-300 rounded-full"></span>
+                   Public URL: <span className="text-indigo-600 font-bold">/shop/{user.id}</span>
+                </p>
+             </div>
           </div>
-          <div className="h-16 w-16 rounded-full border-4 border-indigo-500 bg-indigo-100 flex items-center justify-center text-xl font-bold text-indigo-700">
-            {user?.email?.[0].toUpperCase() || 'S'}
+          <div className="flex gap-2">
+             <Button variant="outline" size="icon" className="rounded-2xl"><Settings className="w-5 h-5" /></Button>
+             <Button className="rounded-2xl px-8">View Public Store</Button>
           </div>
         </header>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
-          <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800">
-            <h3 className="text-sm font-medium text-slate-500 mb-1">Active Products</h3>
-            <span className="text-3xl font-bold text-slate-900 dark:text-white">{activeProductsCount}</span>
-          </div>
-          <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800">
-            <h3 className="text-sm font-medium text-slate-500 mb-1">Total Sales</h3>
-            <span className="text-3xl font-bold text-indigo-600 dark:text-indigo-400">{totalSales}</span>
-          </div>
-          <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800">
-            <h3 className="text-sm font-medium text-slate-500 mb-1">Revenue</h3>
-            <span className="text-3xl font-bold text-emerald-600 dark:text-emerald-400">${totalRevenue.toFixed(2)}</span>
-          </div>
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+           {[
+             { label: 'Estimated Inventory Value', value: `$${totalRevenue.toLocaleString()}`, icon: DollarSign, color: 'text-indigo-600', bg: 'bg-indigo-50 dark:bg-indigo-900/20' },
+             { label: 'Active Products', value: activeProducts, icon: Package, color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-900/20' },
+             { label: 'Recent Performance', value: '+14%', icon: TrendingUp, color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-900/20' },
+           ].map((stat, i) => (
+             <Card key={i} className="p-8 border-none shadow-sm hover:shadow-xl transition-all duration-300">
+                <div className={cn("w-12 h-12 rounded-2xl flex items-center justify-center mb-6", stat.bg)}>
+                   <stat.icon className={cn("w-6 h-6", stat.color)} />
+                </div>
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{stat.label}</p>
+                <h3 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">{stat.value}</h3>
+             </Card>
+           ))}
         </div>
 
-        <section className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 p-6">
-          <h2 className="text-xl font-bold mb-4 text-slate-900 dark:text-white">Your Products</h2>
-          {activeProductsCount === 0 ? (
-            <p className="text-slate-500 text-sm">No products listed yet. Create one to get started!</p>
-          ) : (
-            <div className="flex flex-col gap-4">
-              {products?.map((product) => (
-                <div key={product.id} className="flex gap-4 items-center border border-slate-100 dark:border-slate-800 p-4 rounded-xl">
-                  {product.image_url ? (
-                    <img src={product.image_url} alt={product.title} className="w-16 h-16 object-cover rounded-md bg-slate-100" />
-                  ) : <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-md"></div>}
-                  <div className="flex-1">
-                    <h4 className="font-bold">{product.title}</h4>
-                    <p className="text-sm text-slate-500">${product.price} - Stock: {product.stock}</p>
-                  </div>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+           {/* Products List */}
+           <div className="lg:col-span-7 space-y-8">
+              <div className="flex items-center justify-between">
+                 <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tighter flex items-center gap-3">
+                    <LayoutGrid className="w-6 h-6 text-indigo-600" />
+                    Your Catalog
+                 </h2>
+                 <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">{activeProducts} Total Items</p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                 {products?.map((product) => (
+                    <Card key={product.id} className="group overflow-hidden border-none shadow-sm hover:shadow-xl transition-all duration-500">
+                       <div className="aspect-[4/3] relative overflow-hidden bg-slate-100">
+                          {product.image_url ? (
+                            <img src={product.image_url} alt="" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center opacity-20"><ShoppingBag className="w-12 h-12" /></div>
+                          )}
+                          <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-xl text-xs font-black text-slate-900 shadow-sm">
+                             ${product.price}
+                          </div>
+                       </div>
+                       <div className="p-6 space-y-4">
+                          <div>
+                             <h4 className="font-black text-slate-900 dark:text-white truncate pr-4">{product.title}</h4>
+                             <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mt-1">{product.category}</p>
+                          </div>
+                          
+                          <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-tighter">
+                             <div className="flex items-center gap-2 text-slate-400">
+                                <Package className="w-3.5 h-3.5" />
+                                <span>{product.stock} in stock</span>
+                             </div>
+                             {product.product_variations?.length > 0 && (
+                               <div className="text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-md">
+                                  {product.product_variations.length} Variations
+                               </div>
+                             )}
+                          </div>
+
+                          <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300">
+                             <Button variant="outline" size="sm" className="flex-1 rounded-xl h-9">Edit</Button>
+                             <Button variant="destructive" size="sm" className="rounded-xl h-9 w-10 p-0"><Trash2 className="w-4 h-4" /></Button>
+                          </div>
+                       </div>
+                    </Card>
+                 ))}
+                 
+                 {activeProducts === 0 && (
+                    <div className="col-span-full py-24 border-4 border-dashed border-slate-100 dark:border-slate-800 rounded-[3rem] text-center flex flex-col items-center gap-6 opacity-40">
+                       <ShoppingBag className="w-16 h-16" />
+                       <div className="space-y-1">
+                          <p className="font-black text-lg">No products found</p>
+                          <p className="text-sm font-medium">Start adding items to build your storefront.</p>
+                       </div>
+                    </div>
+                 )}
+              </div>
+           </div>
+
+           {/* Add Product Sidebar */}
+           <div className="lg:col-span-5 relative">
+              <div className="sticky top-24 space-y-8">
+                <div className="flex items-center gap-3">
+                   <div className="w-10 h-10 bg-black text-white rounded-xl flex items-center justify-center">
+                      <Plus className="w-5 h-5" />
+                   </div>
+                   <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tighter">New Listing</h2>
                 </div>
-              ))}
-            </div>
-          )}
-        </section>
-      </div>
-
-      <div className="w-full lg:w-[400px]">
-        <section className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 p-6 sticky top-24">
-          <h2 className="text-xl font-bold mb-6 text-slate-900 dark:text-white">Add New Product</h2>
-          <form action={async (f) => { 'use server'; await createProduct(f); }} className="flex flex-col gap-4">
-            <div>
-              <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Title</label>
-              <input name="title" required className="mt-1 w-full rounded-md px-3 py-2 bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-slate-800 dark:border-slate-700 dark:text-white" />
-            </div>
-
-            <div>
-              <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Category</label>
-              <select name="category" className="mt-1 w-full rounded-md px-3 py-2 bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-slate-800 dark:border-slate-700 dark:text-white">
-                {categories.map(c => <option key={c} value={c}>{c}</option>)}
-              </select>
-            </div>
-            
-            <div>
-              <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Description</label>
-              <textarea name="description" rows={3} className="mt-1 w-full rounded-md px-3 py-2 bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-slate-800 dark:border-slate-700 dark:text-white"></textarea>
-            </div>
-
-            <div className="flex gap-4">
-              <div className="flex-1">
-                <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Price ($)</label>
-                <input name="price" type="number" step="0.01" required className="mt-1 w-full rounded-md px-3 py-2 bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-slate-800 dark:border-slate-700 dark:text-white" />
+                <CreateProductForm />
               </div>
-              <div className="flex-1">
-                <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Stock</label>
-                <input name="stock" type="number" required defaultValue="1" className="mt-1 w-full rounded-md px-3 py-2 bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-slate-800 dark:border-slate-700 dark:text-white" />
-              </div>
-            </div>
-
-            <div>
-              <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Product Image</label>
-              <input name="image" type="file" accept="image/*" className="mt-1 w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 dark:file:bg-indigo-900/30 dark:file:text-indigo-400" />
-            </div>
-
-            <button type="submit" className="mt-4 bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 px-4 rounded-xl transition-all shadow-sm">
-              Publish Product
-            </button>
-          </form>
-        </section>
+           </div>
+        </div>
       </div>
     </div>
   )
+}
+
+function Trash2({ className }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+  )
+}
+
+function cn(...inputs: any[]) {
+   return inputs.filter(Boolean).join(' ')
 }

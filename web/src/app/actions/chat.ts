@@ -65,3 +65,46 @@ export async function getMessages(roomId: string) {
     .eq('chat_room_id', roomId)
     .order('created_at', { ascending: true })
 }
+
+export async function getUserRooms(userId: string) {
+  const supabase = createClient()
+  
+  // 1. Get all room IDs for the user
+  const { data: participations, error: partError } = await supabase
+    .from('chat_participants')
+    .select('chat_room_id')
+    .eq('user_id', userId)
+  
+  if (partError || !participations) return { data: [], error: partError }
+
+  const roomIds = participations.map(p => p.chat_room_id)
+  
+  // 2. Get details for these rooms
+  const rooms = await Promise.all(roomIds.map(async (roomId) => {
+    // Get other participant
+    const { data: others } = await supabase
+      .from('chat_participants')
+      .select('user_id, profiles(*)')
+      .eq('chat_room_id', roomId)
+      .neq('user_id', userId)
+      .maybeSingle()
+    
+    // Get last message
+    const { data: lastMsg } = await supabase
+      .from('messages')
+      .select('*')
+      .eq('chat_room_id', roomId)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+
+    return {
+      id: roomId,
+      otherParticipant: others?.profiles,
+      lastMessage: lastMsg,
+      unreadCount: 0 // For now, can expand later
+    }
+  }))
+
+  return { data: rooms, error: null }
+}
