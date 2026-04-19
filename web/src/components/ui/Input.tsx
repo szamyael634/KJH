@@ -3,7 +3,7 @@ import { cn } from "@/utils/cn"
 
 const Input = React.forwardRef<
   HTMLInputElement,
-  React.InputHTMLAttributes<HTMLInputElement> & { size?: "sm" | "md" }
+  Omit<React.InputHTMLAttributes<HTMLInputElement>, "size"> & { size?: "sm" | "md" }
 >(({ className, type, size = "md", ...props }, ref) => {
   return (
     <input
