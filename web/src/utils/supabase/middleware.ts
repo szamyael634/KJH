@@ -6,9 +6,15 @@ export async function updateSession(request: NextRequest) {
     request,
   })
 
+  // Check if env vars exist before initializing
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+    console.error('Missing Supabase environment variables in Middleware')
+    return supabaseResponse
+  }
+
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
     {
       cookies: {
         getAll() {
@@ -28,16 +34,27 @@ export async function updateSession(request: NextRequest) {
   )
 
   // IMPORTANT: Avoid writing any logic between createServerClient and
-  // supabase.auth.getUser(). A simple mistake could make it very hard to debug
-  // issues with cross-origin requests.
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  // supabase.auth.getUser().
+  let user = null
+  try {
+    const { data } = await supabase.auth.getUser()
+    user = data.user
+  } catch (e) {
+    console.error('Auth check failed in middleware', e)
+  }
 
   let isBanned = false
   if (user) {
-    const { data: profile } = await supabase.from('profiles').select('is_banned').eq('id', user.id).single()
-    isBanned = profile?.is_banned || false
+    try {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('is_banned')
+        .eq('id', user.id)
+        .single()
+      isBanned = profile?.is_banned || false
+    } catch (e) {
+      console.error('Banned check failed in middleware', e)
+    }
   }
 
   // Handle banned users
