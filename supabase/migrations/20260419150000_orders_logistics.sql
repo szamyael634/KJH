@@ -31,10 +31,12 @@ ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.order_items ENABLE ROW LEVEL SECURITY;
 
 -- Policies for Orders
+DROP POLICY IF EXISTS "Buyers can view their own orders." ON public.orders;
 CREATE POLICY "Buyers can view their own orders."
   ON public.orders FOR SELECT
   USING ( auth.uid() = buyer_id );
 
+DROP POLICY IF EXISTS "Riders can view orders available for pickup or assigned to them." ON public.orders;
 CREATE POLICY "Riders can view orders available for pickup or assigned to them."
   ON public.orders FOR SELECT
   USING ( 
@@ -42,11 +44,13 @@ CREATE POLICY "Riders can view orders available for pickup or assigned to them."
     (rider_id = auth.uid() AND status = 'in_transit') 
   );
 
+DROP POLICY IF EXISTS "Riders can update orders they have claimed." ON public.orders;
 CREATE POLICY "Riders can update orders they have claimed."
   ON public.orders FOR UPDATE
   USING ( rider_id = auth.uid() OR (status = 'paid') );
 
 -- Policies for Order Items
+DROP POLICY IF EXISTS "Buyers can view their own order items." ON public.order_items;
 CREATE POLICY "Buyers can view their own order items."
   ON public.order_items FOR SELECT
   USING ( 
@@ -57,6 +61,7 @@ CREATE POLICY "Buyers can view their own order items."
     )
   );
 
+DROP POLICY IF EXISTS "Sellers can view items sold by them." ON public.order_items;
 CREATE POLICY "Sellers can view items sold by them."
   ON public.order_items FOR SELECT
   USING ( seller_id = auth.uid() );
