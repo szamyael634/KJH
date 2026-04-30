@@ -15,8 +15,8 @@ export async function createProductComplexity(formData: any, variations: any[], 
       seller_id: user.id,
       title: formData.title,
       description: formData.description,
-      price: formData.price,
-      stock: formData.stock,
+      price: parseFloat(formData.price) || 0,
+      stock: parseInt(formData.stock, 10) || 0,
       category: formData.category,
       image_url: formData.image_url
     })
@@ -30,8 +30,8 @@ export async function createProductComplexity(formData: any, variations: any[], 
     const variationsData = variations.map(v => ({
       product_id: product.id,
       name: v.name,
-      price: v.price,
-      stock: v.stock
+      price: parseFloat(v.price) || 0,
+      stock: parseInt(v.stock, 10) || 0
     }))
     
     const { error: varError } = await supabase
