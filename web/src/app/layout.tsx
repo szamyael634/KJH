@@ -4,7 +4,7 @@ import './globals.css'
 import Navbar from '@/components/Navbar'
 import CartSidebar from '@/components/CartSidebar'
 import SystemAssistant from '@/components/SystemAssistant'
-import { createClient } from '@/utils/supabase/server'
+import { createClient, hasSupabaseEnv } from '@/utils/supabase/server'
 import { CartProvider } from '@/context/CartContext'
 import { MessagingProvider } from '@/context/MessagingContext'
 
@@ -28,8 +28,8 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode
 }>) {
-  const supabase = await createClient()
-  const { data } = await supabase.auth.getSession()
+  const supabase = hasSupabaseEnv() ? await createClient() : null
+  const { data } = supabase ? await supabase.auth.getSession() : { data: null }
   const session = data?.session
   const userId = session?.user?.id || null
 

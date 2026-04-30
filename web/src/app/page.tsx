@@ -1,4 +1,4 @@
-import { createClient } from '@/utils/supabase/server'
+import { createClient, hasSupabaseEnv } from '@/utils/supabase/server'
 import ProductExplorer from '@/components/ProductExplorer'
 import Link from 'next/link'
 import { 
@@ -16,22 +16,28 @@ import { cn } from '@/utils/cn'
 export const revalidate = 600 // Cache for 10 minutes
 
 export default async function Home() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const supabase = hasSupabaseEnv() ? await createClient() : null
+  const { data: { user } } = supabase
+    ? await supabase.auth.getUser()
+    : { data: { user: null } }
   
   // 1. Fetch banners
-  const { data: banners } = await supabase
-    .from('banners')
-    .select('*')
-    .eq('active', true)
-    .order('sort_order', { ascending: true })
+  const { data: banners } = supabase
+    ? await supabase
+      .from('banners')
+      .select('*')
+      .eq('active', true)
+      .order('sort_order', { ascending: true })
+    : { data: [] }
 
   // 2. Fetch products from all sellers
-  const { data: products } = await supabase
-    .from('products')
-    .select('*, profiles(full_name, store_name)')
-    .order('created_at', { ascending: false })
-    .limit(20)
+  const { data: products } = supabase
+    ? await supabase
+      .from('products')
+      .select('*, profiles(full_name, store_name)')
+      .order('created_at', { ascending: false })
+      .limit(20)
+    : { data: [] }
 
   const categories = [
     { name: 'Electronics', icon: Laptop, color: 'text-indigo-600', bg: 'bg-indigo-50 dark:bg-indigo-900/20' },
