@@ -17,6 +17,7 @@ export const revalidate = 600 // Cache for 10 minutes
 
 export default async function Home() {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
   
   // 1. Fetch banners
   const { data: banners } = await supabase
@@ -99,4 +100,3 @@ export default async function Home() {
     </div>
   )
 }
-

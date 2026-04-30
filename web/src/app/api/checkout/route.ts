@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic';
 export async function POST(req: Request) {
   try {
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-      apiVersion: '2026-03-22.dahlia',
+      apiVersion: '2026-04-22.dahlia',
     });
 
     const supabase = await createClient();
