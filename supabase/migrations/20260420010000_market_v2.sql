@@ -15,7 +15,9 @@ CREATE TABLE IF NOT EXISTS public.reviews (
 );
 
 ALTER TABLE public.reviews ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Reviews are viewable by everyone." ON public.reviews;
 CREATE POLICY "Reviews are viewable by everyone." ON public.reviews FOR SELECT USING ( true );
+DROP POLICY IF EXISTS "Authenticated users can write reviews." ON public.reviews;
 CREATE POLICY "Authenticated users can write reviews." ON public.reviews FOR INSERT WITH CHECK ( auth.uid() = user_id );
 
 -- 3. Wishlist Table
@@ -28,6 +30,7 @@ CREATE TABLE IF NOT EXISTS public.wishlist (
 );
 
 ALTER TABLE public.wishlist ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Users can manage their own wishlist." ON public.wishlist;
 CREATE POLICY "Users can manage their own wishlist." ON public.wishlist FOR ALL USING ( auth.uid() = user_id );
 
 -- 4. Vouchers Table
@@ -43,6 +46,7 @@ CREATE TABLE IF NOT EXISTS public.vouchers (
 );
 
 ALTER TABLE public.vouchers ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Vouchers are viewable by everyone." ON public.vouchers;
 CREATE POLICY "Vouchers are viewable by everyone." ON public.vouchers FOR SELECT USING ( true );
 
 -- 5. Product Rating Aggregation
@@ -65,6 +69,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
+DROP TRIGGER IF EXISTS on_review_change ON public.reviews;
 CREATE TRIGGER on_review_change
   AFTER INSERT OR UPDATE OR DELETE ON public.reviews
   FOR EACH ROW EXECUTE PROCEDURE public.update_product_rating();

@@ -24,7 +24,9 @@ CREATE TABLE IF NOT EXISTS public.banners (
 );
 
 ALTER TABLE public.banners ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Banners are viewable by everyone" ON public.banners;
 CREATE POLICY "Banners are viewable by everyone" ON public.banners FOR SELECT USING (active = true);
+DROP POLICY IF EXISTS "Admins can manage banners" ON public.banners;
 CREATE POLICY "Admins can manage banners" ON public.banners FOR ALL USING (
   EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin')
 );
@@ -40,7 +42,9 @@ CREATE TABLE IF NOT EXISTS public.product_variations (
 );
 
 ALTER TABLE public.product_variations ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Variations viewable by everyone" ON public.product_variations;
 CREATE POLICY "Variations viewable by everyone" ON public.product_variations FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Sellers can manage their own variations" ON public.product_variations;
 CREATE POLICY "Sellers can manage their own variations" ON public.product_variations FOR ALL USING (
   EXISTS (SELECT 1 FROM public.products WHERE id = product_id AND seller_id = auth.uid())
 );
@@ -54,6 +58,7 @@ CREATE TABLE IF NOT EXISTS public.product_tags (
 );
 
 ALTER TABLE public.product_tags ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Tags viewable by everyone" ON public.product_tags;
 CREATE POLICY "Tags viewable by everyone" ON public.product_tags FOR SELECT USING (true);
 
 -- 5. Ticketing System
@@ -79,10 +84,13 @@ CREATE TABLE IF NOT EXISTS public.ticket_messages (
 ALTER TABLE public.tickets ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.ticket_messages ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Users can see their own tickets" ON public.tickets;
 CREATE POLICY "Users can see their own tickets" ON public.tickets FOR SELECT USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Admins can see all tickets" ON public.tickets;
 CREATE POLICY "Admins can see all tickets" ON public.tickets FOR SELECT USING (
   EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin')
 );
+DROP POLICY IF EXISTS "Users can see messages for their tickets" ON public.ticket_messages;
 CREATE POLICY "Users can see messages for their tickets" ON public.ticket_messages FOR SELECT USING (
   EXISTS (SELECT 1 FROM public.tickets WHERE id = ticket_id AND user_id = auth.uid())
 );
@@ -98,7 +106,9 @@ CREATE TABLE IF NOT EXISTS public.verification_documents (
 );
 
 ALTER TABLE public.verification_documents ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Users can see their own docs" ON public.verification_documents;
 CREATE POLICY "Users can see their own docs" ON public.verification_documents FOR SELECT USING (auth.uid() = profile_id);
+DROP POLICY IF EXISTS "Admins can manage docs" ON public.verification_documents;
 CREATE POLICY "Admins can manage docs" ON public.verification_documents FOR ALL USING (
   EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin')
 );
