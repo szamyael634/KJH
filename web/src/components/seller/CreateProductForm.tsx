@@ -62,11 +62,15 @@ export default function CreateProductForm() {
     e.preventDefault()
     setIsLoading(true)
     try {
-      await createProductComplexity(formData, variations, tags)
+      const result = await createProductComplexity(formData, variations, tags)
+      if (result?.error) {
+        alert(result.error)
+        return
+      }
       alert('Product created successfully!')
       window.location.reload()
     } catch (err: any) {
-      alert(err.message)
+      alert(err?.message || 'Failed to publish product.')
     } finally {
       setIsLoading(false)
     }

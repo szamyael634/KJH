@@ -1,4 +1,4 @@
-import { createClient } from '@/utils/supabase/server'
+import { createClient, hasSupabaseEnv } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { 
@@ -14,6 +14,10 @@ import { cn } from '@/utils/cn'
 import SellerDashboardClient from '@/components/seller/SellerDashboardClient'
 
 export default async function SellerDashboard() {
+  if (!hasSupabaseEnv()) {
+    redirect('/login')
+  }
+
   const supabase = await createClient()
   
   const { data: { user } } = await supabase.auth.getUser()
@@ -91,4 +95,3 @@ function Trash2({ className }: { className?: string }) {
     <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
   )
 }
-
