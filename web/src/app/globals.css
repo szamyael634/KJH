@@ -54,26 +54,12 @@
     --radius: 0.75rem;
   }
 
-  .dark {
-    --background: 224 71.4% 4.1%;
-    --foreground: 210 20% 98%;
-    --card: 224 71.4% 4.1%;
-    --card-foreground: 210 20% 98%;
-    --popover: 224 71.4% 4.1%;
-    --popover-foreground: 210 20% 98%;
-    --primary: 263.4 70% 50.4%;
-    --primary-foreground: 210 20% 98%;
-    --secondary: 215 27.9% 16.9%;
-    --secondary-foreground: 210 20% 98%;
-    --muted: 215 27.9% 16.9%;
-    --muted-foreground: 217.9 10.6% 64.9%;
-    --accent: 215 27.9% 16.9%;
-    --accent-foreground: 210 20% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 20% 98%;
-    --border: 215 27.9% 16.9%;
-    --input: 215 27.9% 16.9%;
-    --ring: 263.4 70% 50.4%;
+  /* Force light theme colors even in dark mode for now as requested */
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --background: 210 20% 98%;
+      --foreground: 224 71.4% 4.1%;
+    }
   }
 }
 
@@ -95,21 +81,22 @@
   @apply bg-transparent;
 }
 ::-webkit-scrollbar-thumb {
-  @apply bg-slate-200 dark:bg-slate-800 rounded-full;
+  @apply bg-slate-200 rounded-full;
 }
 ::-webkit-scrollbar-thumb:hover {
-  @apply bg-slate-300 dark:bg-slate-700;
+  @apply bg-slate-300;
 }
 
 /* Minimalism Utilities */
 .glass {
-  @apply backdrop-blur-xl bg-white/70 dark:bg-slate-900/70 border border-white/20 dark:border-slate-800/20;
+  @apply backdrop-blur-xl bg-white/70 border border-white/20;
 }
 
 .neo-blur {
-  @apply backdrop-blur-2xl bg-slate-50/50 dark:bg-slate-950/50;
+  @apply backdrop-blur-2xl bg-slate-50/50;
 }
 
 .button-minimal {
   @apply inline-flex items-center justify-center rounded-2xl px-6 py-3 text-sm font-bold transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-50 disabled:pointer-events-none;
 }
+

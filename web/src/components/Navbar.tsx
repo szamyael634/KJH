@@ -48,7 +48,7 @@ export default function Navbar({ session }: { session: any }) {
 
           {/* Messages */}
           {userId && (
-            <Link href="/messages" className="p-2.5 text-slate-500 hover:text-indigo-600 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-full transition-all relative">
+            <Link href="/messages" className="p-2.5 text-slate-500 hover:text-indigo-600 hover:bg-slate-50 rounded-full transition-all relative">
               <MessageSquare className="w-6 h-6" />
               {/* Optional: unread count dot */}
             </Link>
@@ -58,17 +58,19 @@ export default function Navbar({ session }: { session: any }) {
           {userId && <NotificationBell userId={userId} />}
 
           {/* Cart */}
-          <button 
-            onClick={() => setIsCartOpen(true)}
-            className="p-2.5 text-slate-500 hover:text-indigo-600 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-full transition-all relative"
-          >
-            <ShoppingBag className="w-6 h-6" />
-            {itemCount > 0 && (
-              <span className="absolute top-1 right-1 bg-indigo-600 text-white text-[10px] font-black w-4 h-4 flex items-center justify-center rounded-full ring-2 ring-white dark:ring-slate-900 animate-in zoom-in duration-300">
-                {itemCount}
-              </span>
-            )}
-          </button>
+          {session && (
+            <button 
+              onClick={() => setIsCartOpen(true)}
+              className="p-2.5 text-slate-500 hover:text-indigo-600 hover:bg-slate-50 rounded-full transition-all relative"
+            >
+              <ShoppingBag className="w-6 h-6" />
+              {itemCount > 0 && (
+                <span className="absolute top-1 right-1 bg-indigo-600 text-white text-[10px] font-black w-4 h-4 flex items-center justify-center rounded-full ring-2 ring-white animate-in zoom-in duration-300">
+                  {itemCount}
+                </span>
+              )}
+            </button>
+          )}
 
           {/* Profile / Auth */}
           {session ? (

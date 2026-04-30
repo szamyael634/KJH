@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/Input'
 import Link from 'next/link'
 import { LogIn } from 'lucide-react'
 import MultiStepSignup from '@/components/auth/MultiStepSignup'
+import LoginForm from '@/components/auth/LoginForm'
 
 export default async function LoginPage({ searchParams }: { searchParams: Promise<{ message: string, mode?: string }> }) {
   const params = await searchParams;
@@ -43,48 +44,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
                 <p className="text-slate-500 text-sm font-medium">Log in to manage your Nexus marketplace experience.</p>
               </div>
 
-              <form action={login} className="space-y-5">
-                <div>
-                  <label htmlFor="email" className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2">
-                    Email Address
-                  </label>
-                  <Input
-                    id="email"
-                    name="email"
-                    type="email"
-                    autoComplete="email"
-                    placeholder="you@example.com"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="password" className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2">
-                    Password
-                  </label>
-                  <Input
-                    id="password"
-                    name="password"
-                    type="password"
-                    autoComplete="current-password"
-                    placeholder="••••••••"
-                    required
-                  />
-                </div>
-
-                {params?.message && (
-                  <div className="p-4 bg-red-50 dark:bg-red-950/30 border border-red-100 dark:border-red-900/30 rounded-2xl">
-                    <p className="text-xs font-bold text-red-600 dark:text-red-400 text-center">
-                      {params.message}
-                    </p>
-                  </div>
-                )}
-
-                <Button type="submit" className="w-full py-6 group">
-                  Sign In
-                  <LogIn className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                </Button>
-              </form>
+              <LoginForm />
 
               <div className="relative my-8">
                 <div className="absolute inset-0 flex items-center" aria-hidden="true">

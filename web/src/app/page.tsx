@@ -81,18 +81,20 @@ export default async function Home() {
         </section>
 
         {/* Community Trust Section */}
-        <section className="py-20 bg-indigo-600 rounded-[3rem] text-center space-y-8 px-12 relative overflow-hidden shadow-2xl shadow-indigo-100 dark:shadow-none">
-           <div className="absolute top-0 left-0 w-full h-full opacity-10 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-white via-transparent to-transparent"></div>
-           <div className="relative z-10 space-y-4">
-              <h2 className="text-3xl md:text-5xl font-black text-white tracking-tight">The Future of Local Commerce</h2>
-              <p className="text-indigo-100 max-w-xl mx-auto font-medium leading-relaxed">Join thousands of sellers and riders in the most robust minimalist marketplace in the Philippines.</p>
-           </div>
-           <div className="relative z-10 flex flex-col sm:flex-row justify-center gap-4">
-              <Link href="/login?mode=signup" className="bg-white text-indigo-600 px-10 py-4 rounded-full font-black shadow-xl hover:scale-105 transition-all">
-                 Join Nexus Community
-              </Link>
-           </div>
-        </section>
+        {!user && (
+          <section className="py-20 bg-indigo-600 rounded-[3rem] text-center space-y-8 px-12 relative overflow-hidden shadow-2xl shadow-indigo-100">
+             <div className="absolute top-0 left-0 w-full h-full opacity-10 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-white via-transparent to-transparent"></div>
+             <div className="relative z-10 space-y-4">
+                <h2 className="text-3xl md:text-5xl font-black text-white tracking-tight">The Future of Local Commerce</h2>
+                <p className="text-indigo-100 max-w-xl mx-auto font-medium leading-relaxed">Join thousands of sellers and riders in the most robust minimalist marketplace in the Philippines.</p>
+             </div>
+             <div className="relative z-10 flex flex-col sm:flex-row justify-center gap-4">
+                <Link href="/login?mode=signup" className="bg-white text-indigo-600 px-10 py-4 rounded-full font-black shadow-xl hover:scale-105 transition-all">
+                   Join Nexus Community
+                </Link>
+             </div>
+          </section>
+        )}
       </main>
     </div>
   )
