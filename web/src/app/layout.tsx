@@ -18,6 +18,18 @@ const inter = Inter({
   subsets: ['latin'],
 })
 
+function formatAddress(address: any) {
+  if (!address || typeof address !== 'object') return ''
+  return [
+    address.houseNumber,
+    address.street,
+    address.barangayName || address.barangay,
+    address.municipalityName || address.municipality,
+    address.provinceName || address.province,
+    address.regionName || address.region,
+  ].filter(Boolean).join(', ')
+}
+
 export const metadata: Metadata = {
   title: 'Nexus Marketplace',
   description: 'Premium minimalist eCommerce platform',
@@ -32,6 +44,15 @@ export default async function RootLayout({
   const { data } = supabase ? await supabase.auth.getSession() : { data: null }
   const session = data?.session
   const userId = session?.user?.id || null
+  const { data: profile } = supabase && userId
+    ? await supabase
+      .from('profiles')
+      .select('role, address_json')
+      .eq('id', userId)
+      .maybeSingle()
+    : { data: null }
+  const userRole = profile?.role || null
+  const defaultDeliveryAddress = formatAddress(profile?.address_json)
 
   return (
     <html
@@ -39,9 +60,9 @@ export default async function RootLayout({
       className={`${outfit.variable} ${inter.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-background text-foreground font-sans">
-        <CartProvider>
+        <CartProvider userId={userId} userRole={userRole} defaultDeliveryAddress={defaultDeliveryAddress}>
           <MessagingProvider userId={userId}>
-            <Navbar session={session} />
+            <Navbar session={session} userRole={userRole} />
             <CartSidebar />
             <main className="flex-1 flex flex-col w-full relative">{children}</main>
             <SystemAssistant />

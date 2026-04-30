@@ -18,7 +18,16 @@ export async function login(formData: FormData) {
     redirect('/login?message=Could not authenticate user')
   }
 
+  const { data: authData } = await supabase.auth.getUser()
+  const userId = authData?.user?.id
+  const { data: profile } = userId
+    ? await supabase.from('profiles').select('role').eq('id', userId).maybeSingle()
+    : { data: null }
+
   revalidatePath('/', 'layout')
+  if (profile?.role === 'seller') redirect('/dashboard/seller')
+  if (profile?.role === 'rider') redirect('/dashboard/rider')
+  if (profile?.role === 'admin') redirect('/dashboard/admin')
   redirect('/')
 }
 

@@ -36,11 +36,19 @@ export async function getOrCreateChatRoom(user1Id: string, user2Id: string) {
 
   if (roomError) throw roomError
 
-  // 3. Add participants
-  await supabase.from('chat_participants').insert([
-    { chat_room_id: newRoom.id, user_id: user1Id },
-    { chat_room_id: newRoom.id, user_id: user2Id }
-  ])
+  // 3. Add participants. Insert the current user first so RLS can allow
+  // adding the second participant to a room the current user is already in.
+  const { error: selfError } = await supabase
+    .from('chat_participants')
+    .insert({ chat_room_id: newRoom.id, user_id: user1Id })
+
+  if (selfError) throw selfError
+
+  const { error: otherError } = await supabase
+    .from('chat_participants')
+    .insert({ chat_room_id: newRoom.id, user_id: user2Id })
+
+  if (otherError) throw otherError
 
   return newRoom.id
 }

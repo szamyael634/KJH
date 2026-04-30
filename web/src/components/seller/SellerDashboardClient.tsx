@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import CreateProductForm from '@/components/seller/CreateProductForm'
 import { cn } from '@/utils/cn'
+import { archiveProduct, updateProduct } from '@/app/dashboard/seller/actions'
 
 interface SellerDashboardClientProps {
   products: any[] | null
@@ -21,6 +22,7 @@ interface SellerDashboardClientProps {
 
 export default function SellerDashboardClient({ products, user, activeProducts }: SellerDashboardClientProps) {
   const [showAddForm, setShowAddForm] = useState(false)
+  const [editingProductId, setEditingProductId] = useState<string | null>(null)
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
@@ -73,8 +75,34 @@ export default function SellerDashboardClient({ products, user, activeProducts }
                 </div>
 
                 <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300">
-                  <Button variant="outline" size="sm" className="flex-1 rounded-xl h-9">Edit</Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="flex-1 rounded-xl h-9"
+                    onClick={() => setEditingProductId(editingProductId === product.id ? null : product.id)}
+                  >
+                    Edit
+                  </Button>
+                  <form action={async () => { await archiveProduct(product.id) }}>
+                    <Button variant="outline" size="sm" className="rounded-xl h-9 text-red-500">Archive</Button>
+                  </form>
                 </div>
+                {editingProductId === product.id && (
+                  <form action={updateProduct} className="mt-4 space-y-3 border-t border-slate-100 pt-4">
+                    <input type="hidden" name="product_id" value={product.id} />
+                    <input name="title" defaultValue={product.title || ''} className="w-full rounded-xl bg-slate-50 px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Title" />
+                    <textarea name="description" defaultValue={product.description || ''} className="w-full rounded-xl bg-slate-50 px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-indigo-500 resize-none" rows={3} placeholder="Description" />
+                    <div className="grid grid-cols-2 gap-2">
+                      <input name="price" type="number" step="0.01" defaultValue={product.price || 0} className="rounded-xl bg-slate-50 px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Price" />
+                      <input name="stock" type="number" defaultValue={product.stock || 0} className="rounded-xl bg-slate-50 px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Stock" />
+                    </div>
+                    <input name="category" defaultValue={product.category || 'Electronics'} className="w-full rounded-xl bg-slate-50 px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Category" />
+                    <input name="image_url" defaultValue={product.image_url || ''} className="w-full rounded-xl bg-slate-50 px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Image URL" />
+                    <input name="weight_kg" type="number" step="0.01" defaultValue={product.weight_kg || 0} className="w-full rounded-xl bg-slate-50 px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Weight kg" />
+                    <Button size="sm" className="w-full rounded-xl">Save Changes</Button>
+                  </form>
+                )}
               </div>
             </Card>
           ))}

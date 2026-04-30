@@ -109,6 +109,115 @@ export default function MultiStepSignup() {
   const handleNext = () => setStep((s) => (s + 1) as Step)
   const handleBack = () => setStep((s) => (s - 1) as Step)
 
+  const buildAddress = () => {
+    const region = regions.find((item) => item.code === formData.region)
+    const province = provinces.find((item) => item.code === formData.province)
+    const municipality = municipalities.find((item) => item.code === formData.municipality)
+    const barangay = barangays.find((item) => item.code === formData.barangay)
+
+    return {
+      region: formData.region,
+      regionName: region?.name || '',
+      province: formData.province,
+      provinceName: province?.name || '',
+      municipality: formData.municipality,
+      municipalityName: municipality?.name || '',
+      barangay: formData.barangay,
+      barangayName: barangay?.name || '',
+      street: formData.street,
+      houseNumber: formData.houseNumber,
+    }
+  }
+
+  const handleComplete = async () => {
+    if (formData.password !== formData.confirmPassword) {
+      alert('Passwords do not match.')
+      return
+    }
+
+    setIsLoading(true)
+    const address = buildAddress()
+    const fullName = [formData.firstName, formData.middleName, formData.lastName, formData.suffix]
+      .filter(Boolean)
+      .join(' ')
+
+    const metadata = {
+      role: formData.accountType,
+      first_name: formData.firstName,
+      middle_name: formData.middleName,
+      last_name: formData.lastName,
+      suffix: formData.suffix,
+      dob: formData.dob,
+      full_name: fullName,
+      username: formData.username,
+      display_name: formData.displayName || fullName,
+      avatar_url: formData.avatarUrl,
+      address_json: address,
+      store_name: formData.accountType === 'seller' ? (formData.displayName || fullName) : null,
+      store_description: '',
+      store_logo_url: formData.avatarUrl,
+      store_address_json: address,
+    }
+
+    const { data: current } = await supabase.auth.getUser()
+    let user = current.user
+    let authError = null
+
+    if (!user) {
+      const result = await supabase.auth.signUp({
+        email: formData.email,
+        password: formData.password,
+        options: { data: metadata },
+      })
+      user = result.data.user
+      authError = result.error
+    } else {
+      const result = await supabase.auth.updateUser({
+        password: formData.password || undefined,
+        data: metadata,
+      })
+      user = result.data.user
+      authError = result.error
+    }
+
+    if (authError || !user) {
+      setIsLoading(false)
+      alert(authError?.message || 'Unable to create account.')
+      return
+    }
+
+    const { error: profileError } = await supabase
+      .from('profiles')
+      .upsert({
+        id: user.id,
+        role: formData.accountType,
+        full_name: fullName,
+        first_name: formData.firstName,
+        middle_name: formData.middleName,
+        last_name: formData.lastName,
+        suffix: formData.suffix,
+        dob: formData.dob || null,
+        username: formData.username,
+        display_name: formData.displayName || fullName,
+        avatar_url: formData.avatarUrl || null,
+        address_json: address,
+        store_name: formData.accountType === 'seller' ? (formData.displayName || fullName) : null,
+        store_logo_url: formData.accountType === 'seller' ? (formData.avatarUrl || null) : null,
+        store_address_json: formData.accountType === 'seller' ? address : null,
+        verification_status: formData.accountType === 'buyer' ? 'approved' : 'pending',
+      }, { onConflict: 'id' })
+
+    setIsLoading(false)
+
+    if (profileError) {
+      alert(profileError.message)
+      return
+    }
+
+    router.push(formData.accountType === 'buyer' ? '/' : `/dashboard/${formData.accountType}`)
+    router.refresh()
+  }
+
   const sendOTP = async () => {
     setIsLoading(true)
     const { error } = await supabase.auth.signInWithOtp({
@@ -377,7 +486,11 @@ export default function MultiStepSignup() {
               </div>
            </div>
 
-           <Button className="w-full py-6 text-lg shadow-2xl shadow-indigo-200 dark:shadow-none bg-indigo-600 hover:bg-indigo-700">
+           <Button
+             className="w-full py-6 text-lg shadow-2xl shadow-indigo-200 dark:shadow-none bg-indigo-600 hover:bg-indigo-700"
+             onClick={handleComplete}
+             disabled={isLoading}
+           >
               Complete Account Creation <CheckCircle2 className="ml-2 w-5 h-5" />
            </Button>
            

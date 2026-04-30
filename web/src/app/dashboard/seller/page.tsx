@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { cn } from '@/utils/cn'
 import SellerDashboardClient from '@/components/seller/SellerDashboardClient'
-import { cancelSellerOrder, confirmOrder, markOrderPreparing, markReadyForPickup } from './actions'
+import { cancelSellerOrder, confirmOrder, markOrderPreparing, markReadyForPickup, updateStoreProfile } from './actions'
 
 export default async function SellerDashboard() {
   if (!hasSupabaseEnv()) {
@@ -116,6 +116,23 @@ export default async function SellerDashboard() {
              </Card>
            ))}
         </div>
+
+        <section className="bg-white rounded-3xl shadow-sm border border-slate-100 p-6 space-y-5">
+          <div>
+            <h2 className="text-xl font-black text-slate-900 tracking-tight">Store Settings</h2>
+            <p className="text-sm text-slate-500">These details update your public storefront.</p>
+          </div>
+          <form action={updateStoreProfile} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <input name="store_name" defaultValue={profile?.store_name || ''} placeholder="Store name" className="rounded-2xl bg-slate-50 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-indigo-500" />
+            <input name="store_logo_url" defaultValue={profile?.store_logo_url || ''} placeholder="Logo URL" className="rounded-2xl bg-slate-50 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-indigo-500" />
+            <input name="store_banner_url" defaultValue={profile?.store_banner_url || ''} placeholder="Banner URL" className="rounded-2xl bg-slate-50 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-indigo-500" />
+            <input name="store_address" defaultValue={profile?.store_address_json?.address || ''} placeholder="Pickup/store address" className="rounded-2xl bg-slate-50 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-indigo-500" />
+            <textarea name="store_description" defaultValue={profile?.store_description || ''} placeholder="Store description" rows={3} className="md:col-span-2 rounded-2xl bg-slate-50 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-indigo-500 resize-none" />
+            <div className="md:col-span-2 flex justify-end">
+              <Button className="rounded-2xl px-8">Save Store</Button>
+            </div>
+          </form>
+        </section>
 
         <section className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
           <div className="p-6 border-b border-slate-100 flex items-center justify-between">

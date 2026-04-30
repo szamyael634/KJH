@@ -4,33 +4,66 @@ import { createClient } from '@/utils/supabase/server'
 
 export async function getAdminAnalytics() {
   const supabase = await createClient()
-  
-  // 1. Sales over time (last 7 days)
-  // 2. Top categories
-  // 3. User growth
-  
-  // For now, return mock data reflecting the structure for Recharts
+
+  const since = new Date()
+  since.setDate(since.getDate() - 6)
+  since.setHours(0, 0, 0, 0)
+
+  const [
+    ordersResult,
+    profilesResult,
+    productsResult,
+    pendingResult,
+    ticketsResult,
+  ] = await Promise.all([
+    supabase
+      .from('orders')
+      .select('total_amount, platform_commission_amount, created_at')
+      .gte('created_at', since.toISOString()),
+    supabase.from('profiles').select('id, role, verification_status'),
+    supabase.from('products').select('category'),
+    supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('verification_status', 'pending'),
+    supabase.from('tickets').select('id', { count: 'exact', head: true }).in('status', ['open', 'in-progress']),
+  ])
+
+  const orders = ordersResult.data || []
+  const profiles = profilesResult.data || []
+  const products = productsResult.data || []
+
+  const sales = Array.from({ length: 7 }).map((_, index) => {
+    const date = new Date(since)
+    date.setDate(since.getDate() + index)
+    const key = date.toISOString().slice(0, 10)
+    const total = orders
+      .filter((order) => order.created_at?.slice(0, 10) === key)
+      .reduce((sum, order) => sum + Number(order.total_amount || 0), 0)
+
+    return {
+      name: date.toLocaleDateString('en-US', { weekday: 'short' }),
+      total,
+    }
+  })
+
+  const categories = Object.entries(
+    products.reduce((acc: Record<string, number>, product) => {
+      const category = product.category || 'Uncategorized'
+      acc[category] = (acc[category] || 0) + 1
+      return acc
+    }, {})
+  )
+    .map(([name, count]) => ({ name, count }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 6)
+
   return {
-    sales: [
-      { name: 'Mon', total: 4000 },
-      { name: 'Tue', total: 3000 },
-      { name: 'Wed', total: 5000 },
-      { name: 'Thu', total: 2780 },
-      { name: 'Fri', total: 1890 },
-      { name: 'Sat', total: 2390 },
-      { name: 'Sun', total: 3490 },
-    ],
-    categories: [
-      { name: 'Electronics', count: 400 },
-      { name: 'Fashion', count: 300 },
-      { name: 'Home', count: 200 },
-      { name: 'Beauty', count: 150 },
-    ],
+    sales,
+    categories,
     stats: {
-      activeUsers: 1254,
-      pendingVerifications: 12,
-      openTickets: 5,
-      totalGmv: 45290.40
+      activeUsers: profiles.length,
+      pendingVerifications: pendingResult.count || profiles.filter((p) => p.verification_status === 'pending').length,
+      openTickets: ticketsResult.count || 0,
+      totalGmv: orders.reduce((sum, order) => sum + Number(order.total_amount || 0), 0),
+      platformRevenue: orders.reduce((sum, order) => sum + Number(order.platform_commission_amount || 0), 0),
     }
   }
 }

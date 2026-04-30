@@ -131,3 +131,75 @@ export async function markOrderPreparing(orderId: string) {
 export async function markReadyForPickup(orderId: string) {
   return updateSellerOrder(orderId, 'ready_for_pickup', { ready_for_pickup_at: new Date().toISOString() })
 }
+
+export async function updateStoreProfile(formData: FormData) {
+  const { supabase, sellerId } = await getSellerId()
+  if (!sellerId) return
+
+  const storeName = String(formData.get('store_name') || '').trim()
+  const storeDescription = String(formData.get('store_description') || '').trim()
+  const storeLogoUrl = String(formData.get('store_logo_url') || '').trim()
+  const storeBannerUrl = String(formData.get('store_banner_url') || '').trim()
+  const storeAddress = String(formData.get('store_address') || '').trim()
+
+  const { error } = await supabase
+    .from('profiles')
+    .update({
+      store_name: storeName || null,
+      store_description: storeDescription || null,
+      store_logo_url: storeLogoUrl || null,
+      store_banner_url: storeBannerUrl || null,
+      store_address_json: storeAddress ? { address: storeAddress } : null,
+    })
+    .eq('id', sellerId)
+
+  if (error) throw new Error(error.message)
+
+  revalidatePath('/dashboard/seller')
+  revalidatePath(`/shop/${sellerId}`)
+}
+
+export async function updateProduct(formData: FormData) {
+  const { supabase, sellerId } = await getSellerId()
+  if (!sellerId) return
+
+  const productId = String(formData.get('product_id') || '')
+  const title = String(formData.get('title') || '').trim()
+  if (!productId || !title) return
+
+  const { error } = await supabase
+    .from('products')
+    .update({
+      title,
+      description: String(formData.get('description') || '').trim(),
+      category: String(formData.get('category') || '').trim() || 'Electronics',
+      price: Number(formData.get('price') || 0),
+      stock: Number(formData.get('stock') || 0),
+      image_url: String(formData.get('image_url') || '').trim() || null,
+      weight_kg: Number(formData.get('weight_kg') || 0),
+    })
+    .eq('id', productId)
+    .eq('seller_id', sellerId)
+
+  if (error) throw new Error(error.message)
+
+  revalidatePath('/dashboard/seller')
+  revalidatePath(`/products/${productId}`)
+  revalidatePath(`/shop/${sellerId}`)
+}
+
+export async function archiveProduct(productId: string) {
+  const { supabase, sellerId } = await getSellerId()
+  if (!sellerId) return
+
+  const { error } = await supabase
+    .from('products')
+    .update({ archived_at: new Date().toISOString() })
+    .eq('id', productId)
+    .eq('seller_id', sellerId)
+
+  if (error) throw new Error(error.message)
+
+  revalidatePath('/dashboard/seller')
+  revalidatePath(`/shop/${sellerId}`)
+}

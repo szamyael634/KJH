@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useCart } from '@/context/CartContext'
 
 export default function CartSidebar() {
@@ -14,15 +14,23 @@ export default function CartSidebar() {
     clearCart,
     voucher,
     discount,
-    applyVoucher
+    applyVoucher,
+    canUseCart,
+    defaultDeliveryAddress
   } = useCart()
 
   const [couponInput, setCouponInput] = useState('')
-  const [deliveryAddress, setDeliveryAddress] = useState('')
+  const [deliveryAddress, setDeliveryAddress] = useState(defaultDeliveryAddress)
   const [shippingOption, setShippingOption] = useState('standard')
   const [paymentMethod, setPaymentMethod] = useState('card')
   const [isApplying, setIsApplying] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (defaultDeliveryAddress && !deliveryAddress) {
+      setDeliveryAddress(defaultDeliveryAddress)
+    }
+  }, [defaultDeliveryAddress, deliveryAddress])
 
   const handleApplyVoucher = async () => {
     if (!couponInput) return
@@ -44,7 +52,7 @@ export default function CartSidebar() {
     }
   }
 
-  if (!isCartOpen) return null
+  if (!canUseCart || !isCartOpen) return null
 
   const handleCheckout = async () => {
     try {

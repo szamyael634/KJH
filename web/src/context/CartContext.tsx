@@ -24,36 +24,60 @@ type CartContextType = {
   voucher: string | null
   discount: number
   applyVoucher: (code: string | null, value: number) => void
+  canUseCart: boolean
+  defaultDeliveryAddress: string
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined)
 
-export function CartProvider({ children }: { children: React.ReactNode }) {
+export function CartProvider({
+  children,
+  userId,
+  userRole,
+  defaultDeliveryAddress = '',
+}: {
+  children: React.ReactNode
+  userId: string | null
+  userRole: string | null
+  defaultDeliveryAddress?: string
+}) {
   const [items, setItems] = useState<CartItem[]>([])
   const [isCartOpen, setIsCartOpen] = useState(false)
   const [isInitialized, setIsInitialized] = useState(false)
+  const canUseCart = userRole === 'buyer' || !userRole
+  const cartKey = userId ? `kjh-cart-${userId}` : 'kjh-cart-guest'
 
   // Load from local storage on mount
   useEffect(() => {
-    const savedCart = localStorage.getItem('kjh-cart')
+    if (!canUseCart) {
+      setItems([])
+      setIsCartOpen(false)
+      setIsInitialized(true)
+      return
+    }
+
+    const savedCart = localStorage.getItem(cartKey)
     if (savedCart) {
       try {
         setItems(JSON.parse(savedCart))
       } catch (e) {
         console.error('Failed to parse cart', e)
       }
+    } else {
+      setItems([])
     }
     setIsInitialized(true)
-  }, [])
+  }, [cartKey, canUseCart])
 
   // Save to local storage on change
   useEffect(() => {
-    if (isInitialized) {
-      localStorage.setItem('kjh-cart', JSON.stringify(items))
+    if (isInitialized && canUseCart) {
+      localStorage.setItem(cartKey, JSON.stringify(items))
     }
-  }, [items, isInitialized])
+  }, [items, isInitialized, cartKey, canUseCart])
 
   const addItem = (newItem: CartItem) => {
+    if (!canUseCart) return
     setItems((prev) => {
       const existing = prev.find((i) => i.product_id === newItem.product_id)
       if (existing) {
@@ -106,11 +130,13 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         clearCart,
         totalPrice,
         itemCount,
-        isCartOpen,
+              isCartOpen,
         setIsCartOpen,
         voucher,
         discount,
         applyVoucher,
+        canUseCart,
+        defaultDeliveryAddress,
       }}
     >
       {children}

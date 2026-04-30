@@ -15,7 +15,7 @@ import GlobalSearch from '@/components/GlobalSearch'
 import NotificationBell from '@/components/NotificationBell'
 import { Button } from './ui/Button'
 
-export default function Navbar({ session }: { session: any }) {
+export default function Navbar({ session, userRole }: { session: any, userRole?: string | null }) {
   const pathname = usePathname()
   const { itemCount, setIsCartOpen } = useCart()
   const userId = session?.user?.id
@@ -23,7 +23,7 @@ export default function Navbar({ session }: { session: any }) {
   // Don't show generic nav on auth pages
   if (pathname.startsWith('/login') || pathname.startsWith('/auth')) return null
 
-  const userRole = session?.user?.user_metadata?.role || "buyer" 
+  const role = userRole || session?.user?.user_metadata?.role || "buyer" 
 
   return (
     <nav className="sticky top-0 z-40 w-full glass transition-all">
@@ -58,7 +58,7 @@ export default function Navbar({ session }: { session: any }) {
           {userId && <NotificationBell userId={userId} />}
 
           {/* Cart */}
-          {session && (
+          {session && role === 'buyer' && (
             <button 
               onClick={() => setIsCartOpen(true)}
               className="p-2.5 text-slate-500 hover:text-indigo-600 hover:bg-slate-50 rounded-full transition-all relative"
@@ -75,7 +75,7 @@ export default function Navbar({ session }: { session: any }) {
           {/* Profile / Auth */}
           {session ? (
             <div className="flex items-center gap-2 ml-2">
-              <Link href={`/dashboard/${userRole}`}>
+              <Link href={`/dashboard/${role}`}>
                 <Button variant="ghost" size="icon" className="rounded-full overflow-hidden border border-slate-100 dark:border-slate-800">
                   {session.user.user_metadata.avatar_url ? (
                     <img src={session.user.user_metadata.avatar_url} alt="" className="w-full h-full object-cover" />

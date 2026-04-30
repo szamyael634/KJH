@@ -30,7 +30,10 @@ export default async function ShopPage({ params }: { params: Promise<{ id: strin
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 pb-20">
       {/* Shop Header */}
-      <header className="bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 py-16">
+      <header
+        className="bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 py-16 bg-cover bg-center relative overflow-hidden"
+        style={profile.store_banner_url ? { backgroundImage: `linear-gradient(rgba(255,255,255,.86), rgba(255,255,255,.92)), url(${profile.store_banner_url})` } : undefined}
+      >
         <div className="max-w-7xl mx-auto px-8 flex flex-col md:flex-row items-center gap-8">
           <div className="w-32 h-32 rounded-[32px] bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-5xl border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden">
             {profile.store_logo_url ? (

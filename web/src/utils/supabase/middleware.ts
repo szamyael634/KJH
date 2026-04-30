@@ -44,14 +44,16 @@ export async function updateSession(request: NextRequest) {
   }
 
   let isBanned = false
+  let role: string | null = null
   if (user) {
     try {
       const { data: profile } = await supabase
         .from('profiles')
-        .select('is_banned')
+        .select('is_banned, role')
         .eq('id', user.id)
         .single()
       isBanned = profile?.is_banned || false
+      role = profile?.role || null
     } catch (e) {
       console.error('Banned check failed in middleware', e)
     }
@@ -78,6 +80,19 @@ export async function updateSession(request: NextRequest) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     return NextResponse.redirect(url)
+  }
+
+  if (user && request.nextUrl.pathname.startsWith('/dashboard/')) {
+    const dashboardRole = request.nextUrl.pathname.split('/')[2]
+    if (
+      role &&
+      ['buyer', 'seller', 'rider', 'admin'].includes(dashboardRole) &&
+      dashboardRole !== role
+    ) {
+      const url = request.nextUrl.clone()
+      url.pathname = role === 'buyer' ? '/' : `/dashboard/${role}`
+      return NextResponse.redirect(url)
+    }
   }
 
   return supabaseResponse

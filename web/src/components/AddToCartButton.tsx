@@ -18,8 +18,10 @@ export default function AddToCartButton({
   quantity?: number,
   className?: string
 }) {
-  const { addItem } = useCart()
+  const { addItem, canUseCart } = useCart()
   const [isAdded, setIsAdded] = useState(false)
+
+  if (!canUseCart) return null
 
   const handleAdd = () => {
     addItem({
