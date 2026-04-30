@@ -1,5 +1,5 @@
 import { createClient } from '@/utils/supabase/server'
-import { claimOrder, completeDelivery } from './actions'
+import { claimOrder, completeDelivery, markArrivedAtDelivery, markArrivedAtSeller, markDeliveryAttempted, markPackagePickedUp } from './actions'
 import { redirect } from 'next/navigation'
 
 export const revalidate = 0
@@ -18,19 +18,19 @@ export default async function RiderDashboard() {
     redirect('/')
   }
 
-  // 1. Available Orders (Paid, no rider)
+  // 1. Available Orders (packed by seller, no rider)
   const { data: availableOrders } = await supabase
     .from('orders')
     .select('*, profiles:buyer_id(full_name)')
-    .eq('status', 'paid')
+    .eq('status', 'ready_for_pickup')
     .is('rider_id', null)
     .order('created_at', { ascending: false })
 
-  // 2. Active Deliveries (Assigned to this rider, in_transit)
+  // 2. Active Deliveries (Assigned to this rider)
   const { data: myDeliveries } = await supabase
     .from('orders')
     .select('*, profiles:buyer_id(full_name)')
-    .eq('status', 'in_transit')
+    .in('status', ['assigned', 'arrived_at_seller', 'in_transit', 'arrived_at_delivery', 'delivery_attempted'])
     .eq('rider_id', user?.id)
     .order('created_at', { ascending: false })
 
@@ -65,7 +65,7 @@ export default async function RiderDashboard() {
             {availableOrders?.map((order) => (
               <div key={order.id} className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 flex justify-between items-center group">
                 <div>
-                  <p className="text-xs font-bold text-indigo-600 uppercase tracking-widest mb-1">New Request</p>
+                  <p className="text-xs font-bold text-indigo-600 uppercase tracking-widest mb-1">Ready for Pickup</p>
                   <h3 className="font-bold text-lg text-slate-900 dark:text-white">Delivery to {order.profiles?.full_name || 'Anonymous'}</h3>
                   <p className="text-sm text-slate-500">Order ID: {order.id.slice(0,8)}</p>
                 </div>
@@ -90,15 +90,39 @@ export default async function RiderDashboard() {
             {myDeliveries?.map((order) => (
               <div key={order.id} className="bg-emerald-50 dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-emerald-100 dark:border-slate-800 flex justify-between items-center ring-2 ring-emerald-500/20">
                 <div>
-                  <p className="text-xs font-bold text-emerald-600 uppercase tracking-widest mb-1">In Transit</p>
+                  <p className="text-xs font-bold text-emerald-600 uppercase tracking-widest mb-1">{String(order.status).replaceAll('_', ' ')}</p>
                   <h3 className="font-bold text-lg text-slate-900 dark:text-white">Delivery to {order.profiles?.full_name || 'Anonymous'}</h3>
-                  <p className="text-sm text-slate-500 italic">Address Placeholder: Mock Street, Tech City</p>
+                  <p className="text-sm text-slate-500 italic">{order.delivery_address?.address || 'No delivery address supplied'}</p>
                 </div>
-                <form action={async () => { 'use server'; await completeDelivery(order.id); }}>
-                  <button className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2 rounded-xl text-sm font-bold shadow-md transition-all">
-                    Deliver
-                  </button>
-                </form>
+                <div className="flex flex-wrap gap-2 justify-end">
+                  {order.status === 'assigned' && (
+                    <form action={async () => { 'use server'; await markArrivedAtSeller(order.id); }}>
+                      <button className="bg-slate-900 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-sm">Arrived Seller</button>
+                    </form>
+                  )}
+                  {['assigned', 'arrived_at_seller'].includes(order.status) && (
+                    <form action={async () => { 'use server'; await markPackagePickedUp(order.id); }}>
+                      <button className="bg-indigo-600 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-sm">Picked Up</button>
+                    </form>
+                  )}
+                  {order.status === 'in_transit' && (
+                    <form action={async () => { 'use server'; await markArrivedAtDelivery(order.id); }}>
+                      <button className="bg-blue-600 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-sm">Arrived Buyer</button>
+                    </form>
+                  )}
+                  {['in_transit', 'arrived_at_delivery'].includes(order.status) && (
+                    <>
+                      <form action={async () => { 'use server'; await completeDelivery(order.id); }}>
+                        <button className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-md transition-all">
+                          Delivered
+                        </button>
+                      </form>
+                      <form action={async () => { 'use server'; await markDeliveryAttempted(order.id); }}>
+                        <button className="bg-amber-100 text-amber-700 px-4 py-2 rounded-xl text-sm font-bold shadow-sm">Attempted</button>
+                      </form>
+                    </>
+                  )}
+                </div>
               </div>
             ))}
             {(!myDeliveries || myDeliveries.length === 0) && (

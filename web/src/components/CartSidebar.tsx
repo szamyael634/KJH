@@ -11,12 +11,16 @@ export default function CartSidebar() {
     removeItem, 
     updateQuantity, 
     totalPrice,
+    clearCart,
     voucher,
     discount,
     applyVoucher
   } = useCart()
 
   const [couponInput, setCouponInput] = useState('')
+  const [deliveryAddress, setDeliveryAddress] = useState('')
+  const [shippingOption, setShippingOption] = useState('standard')
+  const [paymentMethod, setPaymentMethod] = useState('card')
   const [isApplying, setIsApplying] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -44,19 +48,37 @@ export default function CartSidebar() {
 
   const handleCheckout = async () => {
     try {
+      if (!deliveryAddress.trim()) {
+        setError('Delivery address is required.')
+        return
+      }
+
       const response = await fetch('/api/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ items, voucherCode: voucher }),
+        body: JSON.stringify({
+          items,
+          voucherCode: voucher,
+          deliveryAddress,
+          shippingOption,
+          paymentMethod,
+        }),
       })
       const data = await response.json()
+      if (data.error) throw new Error(data.error)
       if (data.url) {
         window.location.href = data.url
+      } else if (data.redirectUrl) {
+        clearCart()
+        window.location.href = data.redirectUrl
       }
-    } catch (err) {
-      console.error('Checkout failed', err)
+    } catch (err: any) {
+      setError(err.message || 'Checkout failed')
     }
   }
+
+  const shippingFee = shippingOption === 'express' ? 12 : 5
+  const orderTotal = Math.max(0, totalPrice + shippingFee)
 
   return (
     <div className="fixed inset-0 z-50 overflow-hidden">
@@ -133,6 +155,31 @@ export default function CartSidebar() {
               </div>
 
               <div className="space-y-2">
+                <textarea
+                  placeholder="Delivery address"
+                  className="w-full bg-white dark:bg-slate-800 border-none rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500 resize-none"
+                  rows={3}
+                  value={deliveryAddress}
+                  onChange={(event) => setDeliveryAddress(event.target.value)}
+                />
+                <div className="grid grid-cols-2 gap-2">
+                  <select
+                    className="bg-white dark:bg-slate-800 border-none rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-indigo-500"
+                    value={shippingOption}
+                    onChange={(event) => setShippingOption(event.target.value)}
+                  >
+                    <option value="standard">Standard shipping</option>
+                    <option value="express">Express shipping</option>
+                  </select>
+                  <select
+                    className="bg-white dark:bg-slate-800 border-none rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-indigo-500"
+                    value={paymentMethod}
+                    onChange={(event) => setPaymentMethod(event.target.value)}
+                  >
+                    <option value="card">Card / e-wallet</option>
+                    <option value="cod">Cash on delivery</option>
+                  </select>
+                </div>
                 <div className="flex justify-between items-center text-slate-500 text-sm">
                   <span>Subtotal</span>
                   <span>${items.reduce((acc, i) => acc + i.price * i.quantity, 0).toFixed(2)}</span>
@@ -143,9 +190,13 @@ export default function CartSidebar() {
                     <span>-${discount.toFixed(2)}</span>
                   </div>
                 )}
+                <div className="flex justify-between items-center text-slate-500 text-sm">
+                  <span>Shipping</span>
+                  <span>${shippingFee.toFixed(2)}</span>
+                </div>
                 <div className="flex justify-between items-center text-slate-900 dark:text-white font-black text-2xl pt-2">
                   <span>Total</span>
-                  <span>${totalPrice.toFixed(2)}</span>
+                  <span>${orderTotal.toFixed(2)}</span>
                 </div>
               </div>
 

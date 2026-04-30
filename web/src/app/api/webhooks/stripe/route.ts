@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
-import { createClient } from '@/utils/supabase/server';
+import { createAdminClient } from '@/utils/supabase/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -31,12 +31,20 @@ export async function POST(req: Request) {
     const buyer_id = session.metadata?.buyer_id;
     const items = JSON.parse(session.metadata?.items || '[]');
     const total_amount = session.amount_total ? session.amount_total / 100 : 0;
+    const delivery_address = JSON.parse(session.metadata?.delivery_address || '{}');
 
     if (!buyer_id) {
        return NextResponse.json({ error: 'Missing metadata' }, { status: 400 });
     }
 
-    const supabase = await createClient();
+    const supabase = createAdminClient();
+
+    await supabase
+      .from('profiles')
+      .upsert(
+        { id: buyer_id, role: 'buyer' },
+        { onConflict: 'id', ignoreDuplicates: true }
+      );
 
     // 2. Create the Order
     const { data: order, error: orderError } = await supabase
@@ -44,8 +52,19 @@ export async function POST(req: Request) {
       .insert({
         buyer_id,
         total_amount,
-        status: 'paid',
-        stripe_session_id: session.id
+        subtotal_amount: Number(session.metadata?.subtotal_amount || 0),
+        shipping_fee: Number(session.metadata?.shipping_fee || 0),
+        discount_amount: Number(session.metadata?.discount_applied || 0),
+        platform_commission_amount: Number(session.metadata?.platform_commission_amount || 0),
+        seller_payout_amount: Number(session.metadata?.seller_payout_amount || 0),
+        rider_fee: Number(session.metadata?.rider_fee || 0),
+        status: 'awaiting_seller_confirmation',
+        escrow_status: 'held',
+        payment_method: session.metadata?.payment_method || 'card',
+        shipping_option: session.metadata?.shipping_option || 'standard',
+        delivery_address,
+        seller_confirm_by: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+        stripe_session_id: session.id,
       })
       .select()
       .single();

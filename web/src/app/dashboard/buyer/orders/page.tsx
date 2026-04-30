@@ -1,6 +1,7 @@
 import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
+import { confirmReceipt } from './actions'
 
 export const revalidate = 0
 
@@ -70,6 +71,13 @@ export default async function BuyerOrdersPage() {
                      {order.status}
                    </span>
                    <p className="text-[10px] text-slate-300">#{order.id.slice(0, 8)}</p>
+                   {order.status === 'delivered' && (
+                    <form action={async () => { 'use server'; await confirmReceipt(order.id) }}>
+                      <button className="px-4 py-1 rounded-full bg-emerald-600 text-white text-[10px] font-bold uppercase tracking-widest">
+                        Confirm Receipt
+                      </button>
+                    </form>
+                   )}
                 </div>
               </div>
               
