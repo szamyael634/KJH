@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic';
 export async function POST(req: Request) {
   try {
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-      apiVersion: '2026-03-25.dahlia',
+      apiVersion: '2026-03-22.dahlia',
     });
 
     const supabase = await createClient();
@@ -40,25 +40,25 @@ export async function POST(req: Request) {
     // Re-verify voucher to prevent tampering
     let discountAmount = 0;
     if (voucherCode) {
-        const { data: voucher } = await supabase
-            .from('vouchers')
-            .select('*')
-            .eq('code', voucherCode)
-            .maybeSingle();
+      const { data: voucher } = await supabase
+        .from('vouchers')
+        .select('*')
+        .eq('code', voucherCode)
+        .maybeSingle();
 
-        if (voucher && (!voucher.expires_at || new Date(voucher.expires_at) > new Date())) {
-            const rawTotal = items.reduce((acc: number, item: any) => acc + item.price * item.quantity, 0);
-            if (voucher.seller_id) {
-                const sellerTotal = items
-                    .filter((item: any) => item.seller_id === voucher.seller_id)
-                    .reduce((acc: number, item: any) => acc + item.price * item.quantity, 0);
-                if (sellerTotal > 0) {
-                    discountAmount = voucher.discount_type === 'percent' ? (sellerTotal * voucher.discount_value) / 100 : Math.min(sellerTotal, voucher.discount_value);
-                }
-            } else {
-                discountAmount = voucher.discount_type === 'percent' ? (rawTotal * voucher.discount_value) / 100 : Math.min(rawTotal, voucher.discount_value);
-            }
+      if (voucher && (!voucher.expires_at || new Date(voucher.expires_at) > new Date())) {
+        const rawTotal = items.reduce((acc: number, item: any) => acc + item.price * item.quantity, 0);
+        if (voucher.seller_id) {
+          const sellerTotal = items
+            .filter((item: any) => item.seller_id === voucher.seller_id)
+            .reduce((acc: number, item: any) => acc + item.price * item.quantity, 0);
+          if (sellerTotal > 0) {
+            discountAmount = voucher.discount_type === 'percent' ? (sellerTotal * voucher.discount_value) / 100 : Math.min(sellerTotal, voucher.discount_value);
+          }
+        } else {
+          discountAmount = voucher.discount_type === 'percent' ? (rawTotal * voucher.discount_value) / 100 : Math.min(rawTotal, voucher.discount_value);
         }
+      }
     }
 
     // Map items to Stripe line items
@@ -68,23 +68,23 @@ export async function POST(req: Request) {
         product_data: {
           name: item.title,
         },
-        unit_amount: Math.round(item.price * 100), 
+        unit_amount: Math.round(item.price * 100),
       },
       quantity: item.quantity,
     }));
 
     // Add discount as a negative line item if exists
     if (discountAmount > 0) {
-        line_items.push({
-            price_data: {
-                currency: 'usd',
-                product_data: {
-                    name: `Discount (${voucherCode})`,
-                },
-                unit_amount: -Math.round(discountAmount * 100),
-            },
-            quantity: 1,
-        });
+      line_items.push({
+        price_data: {
+          currency: 'usd',
+          product_data: {
+            name: `Discount (${voucherCode})`,
+          },
+          unit_amount: -Math.round(discountAmount * 100),
+        },
+        quantity: 1,
+      });
     }
 
     // Create Checkout Session
@@ -99,17 +99,17 @@ export async function POST(req: Request) {
         voucher_code: voucherCode || '',
         discount_applied: discountAmount.toString(),
         items: JSON.stringify(items.map((i: any) => ({
-            product_id: i.product_id,
-            seller_id: i.seller_id,
-            quantity: i.quantity,
-            price: i.price
+          product_id: i.product_id,
+          seller_id: i.seller_id,
+          quantity: i.quantity,
+          price: i.price
         })))
       },
     });
 
     // If it's a form post, we must redirect. If it's a JSON call, we return the URL.
     if (contentType.includes('application/x-www-form-urlencoded')) {
-        return Response.redirect(session.url as string, 303);
+      return Response.redirect(session.url as string, 303);
     }
 
     return NextResponse.json({ url: session.url });
