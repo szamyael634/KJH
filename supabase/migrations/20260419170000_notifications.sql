@@ -11,16 +11,29 @@ CREATE TABLE IF NOT EXISTS public.notifications (
 -- Enable RLS
 ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Users can view their own notifications." ON public.notifications;
 CREATE POLICY "Users can view their own notifications."
   ON public.notifications FOR SELECT
   USING ( auth.uid() = user_id );
 
+DROP POLICY IF EXISTS "Users can update their own notifications." ON public.notifications;
 CREATE POLICY "Users can update their own notifications."
   ON public.notifications FOR UPDATE
   USING ( auth.uid() = user_id );
 
 -- Enable Realtime
-ALTER PUBLICATION supabase_realtime ADD TABLE public.notifications;
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_publication_tables
+    WHERE pubname = 'supabase_realtime'
+      AND schemaname = 'public'
+      AND tablename = 'notifications'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.notifications;
+  END IF;
+END $$;
 
 -- 1. Trigger for Buyers (Order Status Updates)
 CREATE OR REPLACE FUNCTION public.handle_buyer_notification()
@@ -42,6 +55,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
+DROP TRIGGER IF EXISTS on_order_status_update ON public.orders;
 CREATE TRIGGER on_order_status_update
   AFTER UPDATE ON public.orders
   FOR EACH ROW EXECUTE PROCEDURE public.handle_buyer_notification();
@@ -68,6 +82,7 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 DROP TRIGGER IF EXISTS on_order_item_created ON public.order_items;
+DROP TRIGGER IF EXISTS on_order_paid_seller_notify ON public.orders;
 CREATE TRIGGER on_order_paid_seller_notify
   AFTER UPDATE ON public.orders
   FOR EACH ROW EXECUTE PROCEDURE public.handle_seller_notification();
