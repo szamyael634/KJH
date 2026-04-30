@@ -14,6 +14,22 @@ export async function createProductComplexity(formData: any, variations: any[], 
     if (authError) return { error: authError.message }
     if (!user) return { error: 'Please sign in before publishing products.' }
 
+    const { error: profileError } = await supabase
+      .from('profiles')
+      .upsert(
+        {
+          id: user.id,
+          role: 'seller',
+          full_name: user.user_metadata?.full_name || user.email || null,
+          avatar_url: user.user_metadata?.avatar_url || null,
+        },
+        { onConflict: 'id', ignoreDuplicates: true }
+      )
+
+    if (profileError) {
+      return { error: `Failed to prepare seller profile: ${profileError.message}` }
+    }
+
     const title = String(formData.title || '').trim()
     if (!title) return { error: 'Product title is required.' }
 
